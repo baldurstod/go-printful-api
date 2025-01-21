@@ -1,0 +1,4 @@
+dist/
+build/
+var/
+config.json

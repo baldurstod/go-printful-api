@@ -1,0 +1,26 @@
+{
+	"http": {
+		"port": 0,
+		"https_key_file": "./var/key.pem",
+		"https_cert_file": "./var/cert.pem"
+	},
+	"databases": {
+		"printful": {
+			"connect_uri": "mongodb://localhost:27017",
+			"db_name": "printful"
+		},
+		"images": {
+			"connect_uri": "mongodb://localhost:27017",
+			"db_name": "images",
+			"bucket_name": "images"
+		}
+	},
+	"printful": {
+		"access_token": "",
+		"simulateMockup": true,
+		"simulateTaskKey": "",
+		"taskInterval": 20000,
+		"mockupDirectory": "./var/mockups/",
+		"images_url": "https://example.com/"
+	}
+}

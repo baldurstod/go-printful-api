@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	printfulsdk "github.com/baldurstod/go-printful-sdk"
+	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
 	printfulAPIModel "github.com/baldurstod/printful-api-model"
 	"github.com/baldurstod/printful-api-model/responses"
 	"github.com/baldurstod/printful-api-model/schemas"
@@ -32,11 +34,13 @@ import (
 )
 
 var printfulConfig config.Printful
+var printfulClient *printfulsdk.PrintfulClient = printfulsdk.NewPrintfulClient("")
 
 func SetPrintfulConfig(config config.Printful) {
 	printfulConfig = config
 	log.Println(config)
-	go initAllProducts()
+	printfulClient.SetAccessToken(config.AccessToken)
+	//go initAllProducts()
 }
 
 const PRINTFUL_PRODUCTS_API = "https://api.printful.com/products"
@@ -137,22 +141,16 @@ func fetchRateLimited(method string, apiURL string, path string, headers map[str
 	return resp, err
 }
 
-func initAllProducts() error {
-	products, err := GetProducts()
+func RefreshAllProducts() error {
+	products, err := printfulClient.GetCatalogProducts()
 	if err != nil {
-		return err
+		return errors.New("unable to get printful response")
 	}
 
-	for _, v := range products {
-		_, err, fromPrintful := GetProduct(v.ID)
-		if err != nil {
-			log.Println(err)
-		}
-		if fromPrintful {
-			// printful product API has a rate of 30/min
-			time.Sleep(3 * time.Second)
-		}
+	for _, product := range products {
+		mongo.InsertProduct(&product)
 	}
+
 	return nil
 }
 
@@ -183,29 +181,17 @@ type GetProductsResponse struct {
 	Result []printfulAPIModel.Product `json:"result"`
 }
 
-var cachedProducts = make([]printfulAPIModel.Product, 0)
-var cachedProductsUpdated = time.Time{}
+//var cachedProducts = make([]printfulmodel.Product, 0)
+//var cachedProductsUpdated = time.Time{}
 
-func GetProducts() ([]printfulAPIModel.Product, error) {
-	now := time.Now()
-	if now.After(cachedProductsUpdated.Add(12 * time.Hour)) {
-		resp, err := fetchRateLimited("GET", PRINTFUL_PRODUCTS_API, "", nil, nil)
-		if err != nil {
-			return nil, errors.New("unable to get printful response")
-		}
+func GetProducts() ([]printfulmodel.Product, error) {
+	products, err := mongo.FindProducts()
 
-		response := GetProductsResponse{}
-		err = json.NewDecoder(resp.Body).Decode(&response)
-		if err != nil {
-			log.Println(err)
-			return nil, errors.New("unable to decode printful response")
-		}
-
-		cachedProducts = response.Result
-		cachedProductsUpdated = now
+	if err != nil {
+		return nil, err
 	}
 
-	return cachedProducts, nil
+	return products, nil
 }
 
 type GetProductResponse struct {
@@ -213,7 +199,7 @@ type GetProductResponse struct {
 	Result printfulAPIModel.ProductInfo `json:"result"`
 }
 
-func GetProduct(productID int) (*printfulAPIModel.ProductInfo, error, bool) {
+func GetProduct(productID int) (*printfulmodel.Product, error, bool) {
 	product, err := mongo.FindProduct(productID)
 	if err == nil {
 		return product, nil, false
@@ -237,10 +223,10 @@ func GetProduct(productID int) (*printfulAPIModel.ProductInfo, error, bool) {
 		return nil, errors.New("printful returned an error"), false
 	}
 
-	p := &(response.Result)
-	mongo.InsertProduct(p)
+	//p := &(response.Result)
+	//mongo.InsertProduct(p)TODO
 
-	return p, nil, true
+	return nil /*TODO*/, nil, true
 }
 
 type GetVariantResponse struct {
@@ -350,18 +336,21 @@ func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 		return nil, err
 	}
 
-	productInfo, err, _ := GetProduct(variantInfo.Product.ID)
+	/*productInfo*/
+	_, err, _ = GetProduct(variantInfo.Product.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	//log.Println("GetSimilarVariants", productInfo)
-	printfileInfo, err := GetPrintfiles(variantInfo.Product.ID)
+	/*printfileInfo*/
+	_, err = GetPrintfiles(variantInfo.Product.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	variantsIDs := make([]int, 0)
+	/*TODO
 	for _, v := range productInfo.Variants {
 		//log.Println("GetSimilarVariants", v)
 		secondVariantID := v.ID
@@ -370,6 +359,7 @@ func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 
 		}
 	}
+	*/
 
 	return variantsIDs, nil
 }

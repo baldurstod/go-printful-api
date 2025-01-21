@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
 	model "github.com/baldurstod/printful-api-model"
 	"go.mongodb.org/mongo-driver/bson"
 	_ "go.mongodb.org/mongo-driver/bson/primitive"
@@ -41,13 +42,41 @@ func closePrintfulDB() {
 	}
 }
 
-type MongoProductInfo struct {
-	ID          int               `json:"id" bson:"id"`
-	LastUpdated int64             `json:"last_updated" bson:"last_updated"`
-	ProductInfo model.ProductInfo `json:"product_info" bson:"product_info"`
+type MongoProduct struct {
+	ID          int                   `json:"id" bson:"id"`
+	LastUpdated int64                 `json:"last_updated" bson:"last_updated"`
+	Product     printfulmodel.Product `json:"product" bson:"product"`
 }
 
-func FindProduct(productID int) (*model.ProductInfo, error) {
+func FindProducts() ([]printfulmodel.Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{}
+
+	cursor, err := productsCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	products := make([]printfulmodel.Product, 0, 400)
+	for cursor.Next(context.TODO()) {
+		doc := MongoProduct{}
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+
+		products = append(products, doc.Product)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return products, nil
+}
+
+func FindProduct(productID int) (*printfulmodel.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -55,26 +84,26 @@ func FindProduct(productID int) (*model.ProductInfo, error) {
 
 	r := productsCollection.FindOne(ctx, filter)
 
-	doc := MongoProductInfo{}
+	doc := MongoProduct{}
 	if err := r.Decode(&doc); err != nil {
 		return nil, err
 	}
 
 	if time.Now().Unix()-doc.LastUpdated > cacheMaxAge {
-		return &doc.ProductInfo, MaxAgeError{}
+		return &doc.Product, MaxAgeError{}
 	}
 
-	return &doc.ProductInfo, nil
+	return &doc.Product, nil
 }
 
-func InsertProduct(productInfo *model.ProductInfo) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func InsertProduct(product *printfulmodel.Product) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
 	defer cancel()
 
 	opts := options.Replace().SetUpsert(true)
 
-	filter := bson.D{{"id", productInfo.Product.ID}}
-	doc := MongoProductInfo{ID: productInfo.Product.ID, LastUpdated: time.Now().Unix(), ProductInfo: *productInfo}
+	filter := bson.D{{"id", product.ID}}
+	doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
 	_, err := productsCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err

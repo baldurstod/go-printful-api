@@ -7,7 +7,6 @@ import (
 	"time"
 
 	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
-	model "github.com/baldurstod/printful-api-model"
 	"go.mongodb.org/mongo-driver/bson"
 	_ "go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -96,6 +95,34 @@ func FindProduct(productID int) (*printfulmodel.Product, error) {
 	return &doc.Product, nil
 }
 
+func FindVariants(productID int) ([]printfulmodel.Variant, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{{"variant.catalog_product_id", productID}}
+
+	cursor, err := variantsCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	variants := make([]printfulmodel.Variant, 0, 20)
+	for cursor.Next(context.TODO()) {
+		doc := MongoVariant{}
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+
+		variants = append(variants, doc.Variant)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return variants, nil
+}
+
 func InsertProduct(product *printfulmodel.Product) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
 	defer cancel()
@@ -109,13 +136,13 @@ func InsertProduct(product *printfulmodel.Product) error {
 	return err
 }
 
-type MongoVariantInfo struct {
-	ID          int               `json:"id" bson:"id"`
-	LastUpdated int64             `json:"last_updated" bson:"last_updated"`
-	VariantInfo model.VariantInfo `json:"variant_info" bson:"variant_info"`
+type MongoVariant struct {
+	ID          int                   `json:"id" bson:"id"`
+	LastUpdated int64                 `json:"last_updated" bson:"last_updated"`
+	Variant     printfulmodel.Variant `json:"variant" bson:"variant"`
 }
 
-func FindVariant(variantID int) (*model.VariantInfo, error) {
+func FindVariant(variantID int) (*printfulmodel.Variant, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -123,26 +150,26 @@ func FindVariant(variantID int) (*model.VariantInfo, error) {
 
 	r := variantsCollection.FindOne(ctx, filter)
 
-	doc := MongoVariantInfo{}
+	doc := MongoVariant{}
 	if err := r.Decode(&doc); err != nil {
 		return nil, err
 	}
 
 	if time.Now().Unix()-doc.LastUpdated > cacheMaxAge {
-		return &doc.VariantInfo, MaxAgeError{}
+		return &doc.Variant, MaxAgeError{}
 	}
 
-	return &doc.VariantInfo, nil
+	return &doc.Variant, nil
 }
 
-func InsertVariant(variantInfo *model.VariantInfo) error {
+func InsertVariant(variant *printfulmodel.Variant) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	opts := options.Replace().SetUpsert(true)
 
-	filter := bson.D{{"id", variantInfo.Variant.ID}}
-	doc := MongoVariantInfo{ID: variantInfo.Variant.ID, LastUpdated: time.Now().Unix(), VariantInfo: *variantInfo}
+	filter := bson.D{{"id", variant.ID}}
+	doc := MongoVariant{ID: variant.ID, LastUpdated: time.Now().Unix(), Variant: *variant}
 	_, err := variantsCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err

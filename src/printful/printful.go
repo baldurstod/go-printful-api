@@ -151,6 +151,18 @@ func RefreshAllProducts() error {
 		mongo.InsertProduct(&product)
 	}
 
+	for _, product := range products {
+
+		variants, err := printfulClient.GetCatalogVariants(product.ID)
+		if err != nil {
+			log.Println("Error while getting product variants", product.ID, err)
+		} else {
+			for _, variant := range variants {
+				mongo.InsertVariant(&variant)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -199,34 +211,22 @@ type GetProductResponse struct {
 	Result printfulAPIModel.ProductInfo `json:"result"`
 }
 
-func GetProduct(productID int) (*printfulmodel.Product, error, bool) {
+func GetProduct(productID int) (*printfulmodel.Product, error) {
 	product, err := mongo.FindProduct(productID)
 	if err == nil {
-		return product, nil, false
+		return product, nil
 	}
 
-	resp, err := fetchRateLimited("GET", PRINTFUL_PRODUCTS_API, "/"+strconv.Itoa(productID), nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get printful response: <%w>", err), false
+	return nil, errors.New("unable to find product")
+}
+
+func GetVariants(productID int) ([]printfulmodel.Variant, error) {
+	variants, err := mongo.FindVariants(productID)
+	if err == nil {
+		return variants, nil
 	}
 
-	response := GetProductResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response"), false
-	}
-
-	if response.Code != 200 {
-		log.Println(err)
-		return nil, errors.New("printful returned an error"), false
-	}
-
-	//p := &(response.Result)
-	//mongo.InsertProduct(p)TODO
-
-	return nil /*TODO*/, nil, true
+	return nil, errors.New("unable to find variants")
 }
 
 type GetVariantResponse struct {
@@ -234,34 +234,13 @@ type GetVariantResponse struct {
 	Result printfulAPIModel.VariantInfo `json:"result"`
 }
 
-func GetVariant(variantID int) (*printfulAPIModel.VariantInfo, error, bool) {
+func GetVariant(variantID int) (*printfulmodel.Variant, error) {
 	variant, err := mongo.FindVariant(variantID)
 	if err == nil {
-		return variant, nil, false
+		return variant, nil
 	}
 
-	resp, err := fetchRateLimited("GET", PRINTFUL_PRODUCTS_API, "/variant/"+strconv.Itoa(variantID), nil, nil)
-	if err != nil {
-		return nil, errors.New("unable to get printful response"), false
-	}
-
-	response := GetVariantResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response"), false
-	}
-
-	if response.Code != 200 {
-		log.Println(err)
-		return nil, errors.New("printful returned an error"), false
-	}
-
-	v := &(response.Result)
-	mongo.InsertVariant(v)
-
-	return v, nil, true
+	return nil, errors.New("unable to find variant")
 }
 
 type GetTemplatesResponse struct {
@@ -331,20 +310,20 @@ func GetPrintfiles(productID int) (*printfulAPIModel.PrintfileInfo, error) {
 }
 
 func GetSimilarVariants(variantID int, placement string) ([]int, error) {
-	variantInfo, err, _ := GetVariant(variantID)
+	variant, err := GetVariant(variantID)
 	if err != nil {
 		return nil, err
 	}
 
 	/*productInfo*/
-	_, err, _ = GetProduct(variantInfo.Product.ID)
+	_, err = GetProduct(variant.CatalogProductID)
 	if err != nil {
 		return nil, err
 	}
 
 	//log.Println("GetSimilarVariants", productInfo)
 	/*printfileInfo*/
-	_, err = GetPrintfiles(variantInfo.Product.ID)
+	_, err = GetPrintfiles(variant.CatalogProductID)
 	if err != nil {
 		return nil, err
 	}

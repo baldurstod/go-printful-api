@@ -87,7 +87,7 @@ func getProducts(c *gin.Context) error {
 }
 
 func getProduct(c *gin.Context, params map[string]interface{}) error {
-	product, err, _ := printful.GetProduct(int(params["product_id"].(float64)))
+	product, err := printful.GetProduct(int(params["product_id"].(float64)))
 	log.Println(params)
 
 	if err != nil {
@@ -100,7 +100,7 @@ func getProduct(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getVariant(c *gin.Context, params map[string]interface{}) error {
-	variant, err, _ := printful.GetVariant(int(params["variant_id"].(float64)))
+	variant, err := printful.GetVariant(int(params["variant_id"].(float64)))
 	log.Println(params)
 
 	if err != nil {

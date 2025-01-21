@@ -70,5 +70,26 @@ func TestGetProducts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//wg.Wait()
+}
+
+func TestGetVariants(t *testing.T) {
+	products, err := printful.GetVariants(679)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	j, _ := json.MarshalIndent(&products, "", "")
+
+	err = os.WriteFile("./var/product_variants.json", j, 0666)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestRefreshAllProducts(t *testing.T) {
+	RefreshAllProducts()
+
+	wg.Wait()
 }

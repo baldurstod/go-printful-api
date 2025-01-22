@@ -87,14 +87,23 @@ func getProducts(c *gin.Context) error {
 }
 
 func getProduct(c *gin.Context, params map[string]interface{}) error {
-	product, err := printful.GetProduct(int(params["product_id"].(float64)))
-	log.Println(params)
+	productID := int(params["product_id"].(float64))
+	product, err := printful.GetProduct(productID)
 
 	if err != nil {
 		return err
 	}
 
-	jsonSuccess(c, product)
+	variants, err := printful.GetVariants(productID)
+
+	if err != nil {
+		return err
+	}
+
+	jsonSuccess(c, map[string]interface{}{
+		"product":  product,
+		"variants": variants,
+	})
 
 	return nil
 }

@@ -153,6 +153,7 @@ func RefreshAllProducts() error {
 
 	for _, product := range products {
 
+		log.Println("Refreshing variants for product", product.ID)
 		variants, err := printfulClient.GetCatalogVariants(product.ID)
 		if err != nil {
 			log.Println("Error while getting product variants", product.ID, err)
@@ -160,6 +161,14 @@ func RefreshAllProducts() error {
 			for _, variant := range variants {
 				mongo.InsertVariant(&variant)
 			}
+		}
+
+		log.Println("Refreshing prices for product", product.ID)
+		prices, err := printfulClient.GetProductPrices(product.ID)
+		if err != nil {
+			log.Println("Error while getting product prices", product.ID, err)
+		} else {
+			mongo.InsertProductPrices(prices)
 		}
 	}
 

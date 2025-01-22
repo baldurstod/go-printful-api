@@ -15,6 +15,7 @@ import (
 
 var cancelConnect context.CancelFunc
 var productsCollection *mongo.Collection
+var productsPricesCollection *mongo.Collection
 var variantsCollection *mongo.Collection
 
 var cacheMaxAge int64 = 86400
@@ -32,6 +33,7 @@ func InitPrintfulDB(config config.Database) {
 	defer closePrintfulDB()
 
 	productsCollection = client.Database(config.DBName).Collection("products")
+	productsPricesCollection = client.Database(config.DBName).Collection("products_prices")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
 }
 
@@ -132,6 +134,35 @@ func InsertProduct(product *printfulmodel.Product) error {
 	filter := bson.D{{"id", product.ID}}
 	doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
 	_, err := productsCollection.ReplaceOne(ctx, filter, doc, opts)
+
+	return err
+}
+
+type MongoProductPrices struct {
+	ID            int                        `json:"id" bson:"id"`
+	Currency      string                     `json:"currency" bson:"currency"`
+	LastUpdated   int64                      `json:"last_updated" bson:"last_updated"`
+	ProductPrices printfulmodel.ProductPrice `json:"product_prices" bson:"product_prices"`
+}
+
+func InsertProductPrices(productPrices *printfulmodel.ProductPrice) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
+	defer cancel()
+
+	opts := options.Replace().SetUpsert(true)
+
+	//	filter := bson.D{{Key: "id", Value: productPrices.Product.ID}}
+	filter := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{"id", productPrices.Product.ID}},
+				bson.D{{"currency", productPrices.Currency}},
+			},
+		},
+	}
+
+	doc := MongoProductPrices{ID: productPrices.Product.ID, Currency: productPrices.Currency, LastUpdated: time.Now().Unix(), ProductPrices: *productPrices}
+	_, err := productsPricesCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err
 }

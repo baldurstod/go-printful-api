@@ -170,6 +170,29 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 	return err
 }
 
+func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{
+		{Key: "$and",
+			Value: bson.A{
+				bson.D{{Key: "product_id", Value: productID}},
+				bson.D{{Key: "currency", Value: currency}},
+			},
+		},
+	}
+
+	r := productsPricesCollection.FindOne(ctx, filter)
+
+	doc := MongoProductPrices{}
+	if err := r.Decode(&doc); err != nil {
+		return nil, false, err
+	}
+
+	return &doc.ProductPrices, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
+}
+
 type MongoProductTemplates struct {
 	ProductID        int                           `json:"product_id" bson:"product_id"`
 	LastUpdated      int64                         `json:"last_updated" bson:"last_updated"`

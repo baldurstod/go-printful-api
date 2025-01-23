@@ -16,6 +16,7 @@ import (
 var cancelConnect context.CancelFunc
 var productsCollection *mongo.Collection
 var productsPricesCollection *mongo.Collection
+var productsTemplatesCollection *mongo.Collection
 var variantsCollection *mongo.Collection
 
 var cacheMaxAge int64 = 86400
@@ -34,6 +35,7 @@ func InitPrintfulDB(config config.Database) {
 
 	productsCollection = client.Database(config.DBName).Collection("products")
 	productsPricesCollection = client.Database(config.DBName).Collection("products_prices")
+	productsTemplatesCollection = client.Database(config.DBName).Collection("products_templates")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
 }
 
@@ -139,14 +141,14 @@ func InsertProduct(product *printfulmodel.Product) error {
 }
 
 type MongoProductPrices struct {
-	ID            int                         `json:"id" bson:"id"`
+	ProductID     int                         `json:"product_id" bson:"product_id"`
 	Currency      string                      `json:"currency" bson:"currency"`
 	LastUpdated   int64                       `json:"last_updated" bson:"last_updated"`
 	ProductPrices printfulmodel.ProductPrices `json:"product_prices" bson:"product_prices"`
 }
 
 func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	opts := options.Replace().SetUpsert(true)
@@ -155,14 +157,34 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 	filter := bson.D{
 		{Key: "$and",
 			Value: bson.A{
-				bson.D{{Key: "id", Value: productPrices.Product.ID}},
+				bson.D{{Key: "product_id", Value: productPrices.Product.ID}},
 				bson.D{{Key: "currency", Value: productPrices.Currency}},
 			},
 		},
 	}
 
-	doc := MongoProductPrices{ID: productPrices.Product.ID, Currency: productPrices.Currency, LastUpdated: time.Now().Unix(), ProductPrices: *productPrices}
+	doc := MongoProductPrices{ProductID: productPrices.Product.ID, Currency: productPrices.Currency, LastUpdated: time.Now().Unix(), ProductPrices: *productPrices}
 	_, err := productsPricesCollection.ReplaceOne(ctx, filter, doc, opts)
+
+	return err
+}
+
+type MongoProductTemplates struct {
+	ProductID        int                           `json:"product_id" bson:"product_id"`
+	LastUpdated      int64                         `json:"last_updated" bson:"last_updated"`
+	ProductTemplates printfulmodel.ProductTemplate `json:"product_templates" bson:"product_templates"`
+}
+
+func InsertProductTemplates(productID int, productTemplates *printfulmodel.ProductTemplate) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	opts := options.Replace().SetUpsert(true)
+
+	filter := bson.D{{Key: "product_id", Value: productID}}
+
+	doc := MongoProductTemplates{ProductID: productID, LastUpdated: time.Now().Unix(), ProductTemplates: *productTemplates}
+	_, err := productsTemplatesCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err
 }

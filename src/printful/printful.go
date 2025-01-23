@@ -225,12 +225,12 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 }
 
 func refreshTemplates(productID int, useCache bool) error {
-	var templates *printfulmodel.ProductTemplates
+	var templates []printfulmodel.MockupTemplates
 	outdated := true
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindProductTemplates(productID)
+		_, outdated, err = mongo.FindMockupTemplates(productID)
 		if err != nil {
 			outdated = true
 		}
@@ -238,11 +238,11 @@ func refreshTemplates(productID int, useCache bool) error {
 
 	if outdated {
 		log.Println("Templates for product", productID, "are outdated, refreshing")
-		templates, err = printfulClient.GetProductTemplates(productID)
+		templates, err = printfulClient.GetMockupTemplates(productID)
 		if err != nil {
 			return fmt.Errorf("error in refreshTemplates: %w", err)
 		} else {
-			mongo.InsertProductTemplates(productID, templates)
+			mongo.InsertMockupTemplates(productID, templates)
 		}
 	}
 

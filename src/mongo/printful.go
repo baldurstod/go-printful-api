@@ -16,7 +16,7 @@ import (
 var cancelConnect context.CancelFunc
 var productsCollection *mongo.Collection
 var productsPricesCollection *mongo.Collection
-var productsTemplatesCollection *mongo.Collection
+var mockupTemplatesCollection *mongo.Collection
 var variantsCollection *mongo.Collection
 
 var cacheMaxAge int64 = 86400
@@ -35,7 +35,7 @@ func InitPrintfulDB(config config.Database) {
 
 	productsCollection = client.Database(config.DBName).Collection("products")
 	productsPricesCollection = client.Database(config.DBName).Collection("products_prices")
-	productsTemplatesCollection = client.Database(config.DBName).Collection("products_templates")
+	mockupTemplatesCollection = client.Database(config.DBName).Collection("mockup_templates")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
 
 	createUniqueIndex(productsCollection, "id", []string{"id"}, true)
@@ -44,7 +44,7 @@ func InitPrintfulDB(config config.Database) {
 	createUniqueIndex(productsPricesCollection, "product_id", []string{"product_id"}, false)
 	createUniqueIndex(productsPricesCollection, "currency", []string{"currency"}, false)
 	createUniqueIndex(productsPricesCollection, "product_id,currency", []string{"product_id", "currency"}, true)
-	createUniqueIndex(productsTemplatesCollection, "product_id", []string{"product_id"}, false)
+	createUniqueIndex(mockupTemplatesCollection, "product_id", []string{"product_id"}, false)
 }
 
 func createUniqueIndex(collection *mongo.Collection, name string, keys []string, unique bool) {
@@ -219,13 +219,13 @@ func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPr
 	return &doc.ProductPrices, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
-type MongoProductTemplates struct {
-	ProductID        int                            `json:"product_id" bson:"product_id"`
-	LastUpdated      int64                          `json:"last_updated" bson:"last_updated"`
-	ProductTemplates printfulmodel.ProductTemplates `json:"product_templates" bson:"product_templates"`
+type MongoMockupTemplates struct {
+	ProductID       int                             `json:"product_id" bson:"product_id"`
+	LastUpdated     int64                           `json:"last_updated" bson:"last_updated"`
+	MockupTemplates []printfulmodel.MockupTemplates `json:"mockup_templates" bson:"mockup_templates"`
 }
 
-func InsertProductTemplates(productID int, productTemplates *printfulmodel.ProductTemplates) error {
+func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.MockupTemplates) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -233,26 +233,26 @@ func InsertProductTemplates(productID int, productTemplates *printfulmodel.Produ
 
 	filter := bson.D{{Key: "product_id", Value: productID}}
 
-	doc := MongoProductTemplates{ProductID: productID, LastUpdated: time.Now().Unix(), ProductTemplates: *productTemplates}
-	_, err := productsTemplatesCollection.ReplaceOne(ctx, filter, doc, opts)
+	doc := MongoMockupTemplates{ProductID: productID, LastUpdated: time.Now().Unix(), MockupTemplates: mockupTemplates}
+	_, err := mockupTemplatesCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err
 }
 
-func FindProductTemplates(productID int) (*printfulmodel.ProductTemplates, bool, error) {
+func FindMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	filter := bson.D{{Key: "product_id", Value: productID}}
 
-	r := productsTemplatesCollection.FindOne(ctx, filter)
+	r := mockupTemplatesCollection.FindOne(ctx, filter)
 
-	doc := MongoProductTemplates{}
+	doc := MongoMockupTemplates{}
 	if err := r.Decode(&doc); err != nil {
 		return nil, false, err
 	}
 
-	return &doc.ProductTemplates, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
+	return doc.MockupTemplates, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
 type MongoVariant struct {

@@ -3,7 +3,7 @@ module go-printful-api
 go 1.22.4
 
 require (
-	github.com/baldurstod/go-printful-sdk v0.0.0-20250123195029-c2af9ef6f67a
+	github.com/baldurstod/go-printful-sdk v0.0.0-20250123233349-71bc8234a65d
 	github.com/baldurstod/printful-api-model v0.0.37
 	github.com/baldurstod/randstr v0.0.1
 	github.com/gin-contrib/cors v1.7.3

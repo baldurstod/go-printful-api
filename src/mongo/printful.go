@@ -99,32 +99,37 @@ func FindProduct(productID int) (*printfulmodel.Product, error) {
 	return &doc.Product, nil
 }
 
-func FindVariants(productID int) ([]printfulmodel.Variant, error) {
+func FindVariants(productID int) (variants []printfulmodel.Variant, outdated bool, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	filter := bson.D{{Key: "variant.catalog_product_id", Value: productID}}
+	outdated = false
 
 	cursor, err := variantsCollection.Find(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	variants := make([]printfulmodel.Variant, 0, 20)
+	variants = make([]printfulmodel.Variant, 0, 20)
 	for cursor.Next(context.TODO()) {
 		doc := MongoVariant{}
 		if err := cursor.Decode(&doc); err != nil {
-			return nil, err
+			return nil, false, err
+		}
+
+		if time.Now().Unix()-doc.LastUpdated > cacheMaxAge {
+			outdated = true
 		}
 
 		variants = append(variants, doc.Variant)
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return variants, nil
+	return variants, outdated, nil
 }
 
 func InsertProduct(product *printfulmodel.Product) error {

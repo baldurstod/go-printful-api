@@ -35,7 +35,7 @@ func RefreshAllProducts() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		printful.RefreshAllProducts()
+		printful.RefreshAllProducts("USD", true)
 	}()
 }
 

@@ -141,7 +141,7 @@ func fetchRateLimited(method string, apiURL string, path string, headers map[str
 	return resp, err
 }
 
-func RefreshAllProducts() error {
+func RefreshAllProducts(currency string, useCache bool) error {
 	products, err := printfulClient.GetCatalogProducts()
 	if err != nil {
 		return errors.New("unable to get printful response")
@@ -152,21 +152,66 @@ func RefreshAllProducts() error {
 	}
 
 	for _, product := range products {
-
-		log.Println("Refreshing variants for product", product.ID)
-		variants, err := printfulClient.GetCatalogVariants(product.ID)
-		if err != nil {
-			log.Println("Error while getting product variants", product.ID, err)
-		} else {
-			for _, variant := range variants {
-				mongo.InsertVariant(&variant)
-			}
+		if err = refreshVariants(product.ID, useCache); err != nil {
+			log.Println("Error while refreshing product variants", product.ID, err)
 		}
 
-		log.Println("Refreshing prices for product", product.ID)
-		prices, err := printfulClient.GetProductPrices(product.ID)
+		if err = refreshPrices(product.ID, currency, useCache); err != nil {
+			log.Println("Error while refreshing product prices", product.ID, err)
+		}
+	}
+
+	return nil
+}
+
+func refreshVariants(productID int, useCache bool) error {
+	//log.Println("Refreshing variants for product", productID)
+
+	var variants []printfulmodel.Variant
+	outdated := true
+	var err error
+
+	if useCache {
+		_, outdated, err = mongo.FindVariants(productID)
 		if err != nil {
-			log.Println("Error while getting product prices", product.ID, err)
+			return fmt.Errorf("error in refreshVariants: %w", err)
+		}
+	}
+
+	if outdated {
+		log.Println("Variants for product", productID, "are outdated, refreshing")
+		variants, err = printfulClient.GetCatalogVariants(productID)
+		if err != nil {
+			//log.Println("Error while getting product variants", productID, err)
+			return fmt.Errorf("error in refreshVariants: %w", err)
+		} else {
+			for _, variant := range variants {
+				if err = mongo.InsertVariant(&variant); err != nil {
+					return fmt.Errorf("error in refreshVariants: %w", err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func refreshPrices(productID int, currency string, useCache bool) error {
+	var prices *printfulmodel.ProductPrices
+	outdated := true
+	var err error
+
+	if useCache {
+		_, outdated, err = mongo.FindProductPrices(productID, currency)
+		if err != nil {
+			return fmt.Errorf("error in refreshPrices: %w", err)
+		}
+	}
+
+	if outdated {
+		log.Println("Prices for product", productID, "currency", currency, "are outdated, refreshing")
+		prices, err = printfulClient.GetProductPrices(productID)
+		if err != nil {
+			return fmt.Errorf("error in refreshPrices: %w", err)
 		} else {
 			mongo.InsertProductPrices(prices)
 		}
@@ -221,7 +266,7 @@ type GetProductResponse struct {
 }
 
 func GetProduct(productID int) (*printfulmodel.Product, error) {
-	product, err := mongo.FindProduct(productID)
+	product, _, err := mongo.FindProduct(productID)
 	if err == nil {
 		return product, nil
 	}
@@ -230,7 +275,7 @@ func GetProduct(productID int) (*printfulmodel.Product, error) {
 }
 
 func GetVariants(productID int) ([]printfulmodel.Variant, error) {
-	variants, err := mongo.FindVariants(productID)
+	variants, _, err := mongo.FindVariants(productID)
 	if err == nil {
 		return variants, nil
 	}
@@ -244,7 +289,7 @@ type GetVariantResponse struct {
 }
 
 func GetVariant(variantID int) (*printfulmodel.Variant, error) {
-	variant, err := mongo.FindVariant(variantID)
+	variant, _, err := mongo.FindVariant(variantID)
 	if err == nil {
 		return variant, nil
 	}

@@ -44,6 +44,7 @@ func InitPrintfulDB(config config.Database) {
 	createUniqueIndex(productsPricesCollection, "product_id", []string{"product_id"}, false)
 	createUniqueIndex(productsPricesCollection, "currency", []string{"currency"}, false)
 	createUniqueIndex(productsPricesCollection, "product_id,currency", []string{"product_id", "currency"}, true)
+	createUniqueIndex(productsTemplatesCollection, "product_id", []string{"product_id"}, false)
 }
 
 func createUniqueIndex(collection *mongo.Collection, name string, keys []string, unique bool) {
@@ -219,12 +220,12 @@ func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPr
 }
 
 type MongoProductTemplates struct {
-	ProductID        int                           `json:"product_id" bson:"product_id"`
-	LastUpdated      int64                         `json:"last_updated" bson:"last_updated"`
-	ProductTemplates printfulmodel.ProductTemplate `json:"product_templates" bson:"product_templates"`
+	ProductID        int                            `json:"product_id" bson:"product_id"`
+	LastUpdated      int64                          `json:"last_updated" bson:"last_updated"`
+	ProductTemplates printfulmodel.ProductTemplates `json:"product_templates" bson:"product_templates"`
 }
 
-func InsertProductTemplates(productID int, productTemplates *printfulmodel.ProductTemplate) error {
+func InsertProductTemplates(productID int, productTemplates *printfulmodel.ProductTemplates) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -236,6 +237,22 @@ func InsertProductTemplates(productID int, productTemplates *printfulmodel.Produ
 	_, err := productsTemplatesCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err
+}
+
+func FindProductTemplates(productID int) (*printfulmodel.ProductTemplates, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{{Key: "product_id", Value: productID}}
+
+	r := productsTemplatesCollection.FindOne(ctx, filter)
+
+	doc := MongoProductTemplates{}
+	if err := r.Decode(&doc); err != nil {
+		return nil, false, err
+	}
+
+	return &doc.ProductTemplates, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
 type MongoVariant struct {

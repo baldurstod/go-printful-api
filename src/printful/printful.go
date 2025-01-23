@@ -159,6 +159,10 @@ func RefreshAllProducts(currency string, useCache bool) error {
 		if err = refreshPrices(product.ID, currency, useCache); err != nil {
 			log.Println("Error while refreshing product prices", product.ID, err)
 		}
+
+		if err = refreshTemplates(product.ID, useCache); err != nil {
+			log.Println("Error while refreshing product templates", product.ID, err)
+		}
 	}
 
 	return nil
@@ -174,7 +178,7 @@ func refreshVariants(productID int, useCache bool) error {
 	if useCache {
 		_, outdated, err = mongo.FindVariants(productID)
 		if err != nil {
-			return fmt.Errorf("error in refreshVariants: %w", err)
+			outdated = true
 		}
 	}
 
@@ -203,7 +207,7 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 	if useCache {
 		_, outdated, err = mongo.FindProductPrices(productID, currency)
 		if err != nil {
-			return fmt.Errorf("error in refreshPrices: %w", err)
+			outdated = true
 		}
 	}
 
@@ -214,6 +218,31 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 			return fmt.Errorf("error in refreshPrices: %w", err)
 		} else {
 			mongo.InsertProductPrices(prices)
+		}
+	}
+
+	return nil
+}
+
+func refreshTemplates(productID int, useCache bool) error {
+	var templates *printfulmodel.ProductTemplates
+	outdated := true
+	var err error
+
+	if useCache {
+		_, outdated, err = mongo.FindProductTemplates(productID)
+		if err != nil {
+			outdated = true
+		}
+	}
+
+	if outdated {
+		log.Println("Templates for product", productID, "are outdated, refreshing")
+		templates, err = printfulClient.GetProductTemplates(productID)
+		if err != nil {
+			return fmt.Errorf("error in refreshTemplates: %w", err)
+		} else {
+			mongo.InsertProductTemplates(productID, templates)
 		}
 	}
 

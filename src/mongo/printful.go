@@ -81,7 +81,7 @@ func FindProduct(productID int) (*printfulmodel.Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.D{{"id", productID}}
+	filter := bson.D{{Key: "id", Value: productID}}
 
 	r := productsCollection.FindOne(ctx, filter)
 
@@ -101,7 +101,7 @@ func FindVariants(productID int) ([]printfulmodel.Variant, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.D{{"variant.catalog_product_id", productID}}
+	filter := bson.D{{Key: "variant.catalog_product_id", Value: productID}}
 
 	cursor, err := variantsCollection.Find(ctx, filter)
 	if err != nil {
@@ -131,7 +131,7 @@ func InsertProduct(product *printfulmodel.Product) error {
 
 	opts := options.Replace().SetUpsert(true)
 
-	filter := bson.D{{"id", product.ID}}
+	filter := bson.D{{Key: "id", Value: product.ID}}
 	doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
 	_, err := productsCollection.ReplaceOne(ctx, filter, doc, opts)
 
@@ -153,10 +153,10 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 
 	//	filter := bson.D{{Key: "id", Value: productPrices.Product.ID}}
 	filter := bson.D{
-		{"$and",
-			bson.A{
-				bson.D{{"id", productPrices.Product.ID}},
-				bson.D{{"currency", productPrices.Currency}},
+		{Key: "$and",
+			Value: bson.A{
+				bson.D{{Key: "id", Value: productPrices.Product.ID}},
+				bson.D{{Key: "currency", Value: productPrices.Currency}},
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func FindVariant(variantID int) (*printfulmodel.Variant, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.D{{"id", variantID}}
+	filter := bson.D{{Key: "id", Value: variantID}}
 
 	r := variantsCollection.FindOne(ctx, filter)
 
@@ -199,7 +199,7 @@ func InsertVariant(variant *printfulmodel.Variant) error {
 
 	opts := options.Replace().SetUpsert(true)
 
-	filter := bson.D{{"id", variant.ID}}
+	filter := bson.D{{Key: "id", Value: variant.ID}}
 	doc := MongoVariant{ID: variant.ID, LastUpdated: time.Now().Unix(), Variant: *variant}
 	_, err := variantsCollection.ReplaceOne(ctx, filter, doc, opts)
 

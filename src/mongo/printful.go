@@ -37,6 +37,31 @@ func InitPrintfulDB(config config.Database) {
 	productsPricesCollection = client.Database(config.DBName).Collection("products_prices")
 	productsTemplatesCollection = client.Database(config.DBName).Collection("products_templates")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
+
+	createUniqueIndex(productsCollection, "id", []string{"id"}, true)
+	createUniqueIndex(variantsCollection, "id", []string{"id"}, true)
+	createUniqueIndex(variantsCollection, "variant.catalog_product_id", []string{"variant.catalog_product_id"}, false)
+	createUniqueIndex(productsPricesCollection, "product_id", []string{"product_id"}, false)
+	createUniqueIndex(productsPricesCollection, "currency", []string{"currency"}, false)
+	createUniqueIndex(productsPricesCollection, "product_id,currency", []string{"product_id", "currency"}, true)
+}
+
+func createUniqueIndex(collection *mongo.Collection, name string, keys []string, unique bool) {
+	keysDoc := bson.D{}
+	for _, key := range keys {
+		keysDoc = append(keysDoc, bson.E{Key: key, Value: 1})
+		//keysDoc = keysDoc.Append(key, bsonx.Int32(1))
+	}
+
+	if _, err := collection.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys:    keysDoc, //bson.D{{Key: name, Value: 1}},
+			Options: options.Index().SetUnique(unique).SetName(name),
+		},
+	); err != nil {
+		log.Println("Failed to create index", name, "on collection", collection.Name(), err)
+	}
 }
 
 func closePrintfulDB() {

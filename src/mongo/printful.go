@@ -79,7 +79,7 @@ func FindProducts() ([]printfulmodel.Product, error) {
 	return products, nil
 }
 
-func FindProduct(productID int) (*printfulmodel.Product, error) {
+func FindProduct(productID int) (*printfulmodel.Product, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -89,14 +89,10 @@ func FindProduct(productID int) (*printfulmodel.Product, error) {
 
 	doc := MongoProduct{}
 	if err := r.Decode(&doc); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	if time.Now().Unix()-doc.LastUpdated > cacheMaxAge {
-		return &doc.Product, MaxAgeError{}
-	}
-
-	return &doc.Product, nil
+	return &doc.Product, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
 func FindVariants(productID int) (variants []printfulmodel.Variant, outdated bool, err error) {
@@ -200,7 +196,7 @@ type MongoVariant struct {
 	Variant     printfulmodel.Variant `json:"variant" bson:"variant"`
 }
 
-func FindVariant(variantID int) (*printfulmodel.Variant, error) {
+func FindVariant(variantID int) (*printfulmodel.Variant, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -210,14 +206,10 @@ func FindVariant(variantID int) (*printfulmodel.Variant, error) {
 
 	doc := MongoVariant{}
 	if err := r.Decode(&doc); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	if time.Now().Unix()-doc.LastUpdated > cacheMaxAge {
-		return &doc.Variant, MaxAgeError{}
-	}
-
-	return &doc.Variant, nil
+	return &doc.Variant, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
 func InsertVariant(variant *printfulmodel.Variant) error {

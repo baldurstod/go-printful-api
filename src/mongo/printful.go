@@ -139,13 +139,13 @@ func InsertProduct(product *printfulmodel.Product) error {
 }
 
 type MongoProductPrices struct {
-	ID            int                        `json:"id" bson:"id"`
-	Currency      string                     `json:"currency" bson:"currency"`
-	LastUpdated   int64                      `json:"last_updated" bson:"last_updated"`
-	ProductPrices printfulmodel.ProductPrice `json:"product_prices" bson:"product_prices"`
+	ID            int                         `json:"id" bson:"id"`
+	Currency      string                      `json:"currency" bson:"currency"`
+	LastUpdated   int64                       `json:"last_updated" bson:"last_updated"`
+	ProductPrices printfulmodel.ProductPrices `json:"product_prices" bson:"product_prices"`
 }
 
-func InsertProductPrices(productPrices *printfulmodel.ProductPrice) error {
+func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
 	defer cancel()
 

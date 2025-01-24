@@ -167,6 +167,20 @@ func InsertProduct(product *printfulmodel.Product) error {
 	return err
 }
 
+func UpdateProductVariantIds(id int, variantIds []int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
+	defer cancel()
+
+	filter := bson.D{{Key: "id", Value: id}}
+
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "product.catalog_variant_ids", Value: variantIds}}}}
+
+	//doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
+	_, err := productsCollection.UpdateOne(ctx, filter, update)
+
+	return err
+}
+
 type MongoProductPrices struct {
 	ProductID     int                         `json:"product_id" bson:"product_id"`
 	Currency      string                      `json:"currency" bson:"currency"`

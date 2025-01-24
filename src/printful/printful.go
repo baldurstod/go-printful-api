@@ -189,9 +189,20 @@ func refreshVariants(productID int, useCache bool) error {
 			//log.Println("Error while getting product variants", productID, err)
 			return fmt.Errorf("error in refreshVariants: %w", err)
 		} else {
+
+			variantIDs := make([]int, 0, 20)
+
 			for _, variant := range variants {
+				variantIDs = append(variantIDs, variant.ID)
 				if err = mongo.InsertVariant(&variant); err != nil {
 					return fmt.Errorf("error in refreshVariants: %w", err)
+				}
+			}
+
+			if len(variantIDs) > 0 {
+				if err = mongo.UpdateProductVariantIds(productID, variantIDs); err != nil {
+					return fmt.Errorf("error in refreshVariants: %w", err)
+
 				}
 			}
 		}

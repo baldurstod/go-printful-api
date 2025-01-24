@@ -16,6 +16,8 @@ github.com/baldurstod/go-printful-sdk v0.0.0-20250123231615-3964a9e1d6c6 h1:Iu/C
 github.com/baldurstod/go-printful-sdk v0.0.0-20250123231615-3964a9e1d6c6/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
 github.com/baldurstod/go-printful-sdk v0.0.0-20250123233349-71bc8234a65d h1:THbzFuOfkNMzmg8urd9MHvVO/icFxvjKxD90uJCjZv8=
 github.com/baldurstod/go-printful-sdk v0.0.0-20250123233349-71bc8234a65d/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
+github.com/baldurstod/go-printful-sdk v0.0.0-20250124220556-c5c479db32d1 h1:yefNU/+mqVOrVUqEi2mjKKSphqkAdpn5GN4098WtcRk=
+github.com/baldurstod/go-printful-sdk v0.0.0-20250124220556-c5c479db32d1/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
 github.com/baldurstod/printful-api-model v0.0.37 h1:k9ph3hcoJsPmGW41UKs/G3zNfouD18vX+HdYr7zt/ls=
 github.com/baldurstod/printful-api-model v0.0.37/go.mod h1:Gv/rZUWjm1miHgwqae0W9NcFohomreyqtqnvIH+dqeg=
 github.com/baldurstod/randstr v0.0.1 h1:GcG40Py50HXuTvqAKMZP+ex0IDpxXH8vBNMKLwCL51o=

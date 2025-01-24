@@ -143,7 +143,7 @@ func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getTemplates(c *gin.Context, params map[string]interface{}) error {
-	templates, err := printful.GetTemplates(int(params["product_id"].(float64)))
+	templates, err := printful.GetMockupTemplates(int(params["product_id"].(float64)))
 	log.Println(params)
 
 	if err != nil {

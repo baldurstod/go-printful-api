@@ -331,32 +331,14 @@ type GetTemplatesResponse struct {
 	Result printfulAPIModel.ProductTemplate `json:"result"`
 }
 
-func GetTemplates(productID int) (*printfulAPIModel.ProductTemplate, error) {
-	headers := map[string]string{
-		"Authorization": "Bearer " + printfulConfig.AccessToken,
-	}
+func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) {
+	templates, _, err := mongo.FindMockupTemplates(productID)
 
-	resp, err := fetchRateLimited("GET", PRINTFUL_MOCKUP_GENERATOR_API, "/templates/"+strconv.Itoa(productID), headers, nil)
 	if err != nil {
-		return nil, errors.New("unable to get printful response")
+		return nil, err
 	}
 
-	response := GetTemplatesResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response")
-	}
-
-	if response.Code != 200 {
-		log.Println(err)
-		return nil, errors.New("printful returned an error")
-	}
-
-	p := &(response.Result)
-
-	return p, nil
+	return templates, nil
 }
 
 type GetPrintfilesResponse struct {

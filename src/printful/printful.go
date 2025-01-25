@@ -163,6 +163,10 @@ func RefreshAllProducts(currency string, useCache bool) error {
 		if err = refreshTemplates(product.ID, useCache); err != nil {
 			log.Println("Error while refreshing product templates", product.ID, err)
 		}
+
+		if err = refreshStyles(product.ID, useCache); err != nil {
+			log.Println("Error while refreshing product styles", product.ID, err)
+		}
 	}
 
 	return nil
@@ -254,6 +258,31 @@ func refreshTemplates(productID int, useCache bool) error {
 			return fmt.Errorf("error in refreshTemplates: %w", err)
 		} else {
 			mongo.InsertMockupTemplates(productID, templates)
+		}
+	}
+
+	return nil
+}
+
+func refreshStyles(productID int, useCache bool) error {
+	var styles []printfulmodel.MockupStyles
+	outdated := true
+	var err error
+
+	if useCache {
+		_, outdated, err = mongo.FindMockupStyles(productID)
+		if err != nil {
+			outdated = true
+		}
+	}
+
+	if outdated {
+		log.Println("Styles for product", productID, "are outdated, refreshing")
+		styles, err = printfulClient.GetMockupStyles(productID)
+		if err != nil {
+			return fmt.Errorf("error in refreshStyles: %w", err)
+		} else {
+			mongo.InsertMockupStyles(productID, styles)
 		}
 	}
 

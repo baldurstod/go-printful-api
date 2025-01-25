@@ -17,6 +17,7 @@ var cancelConnect context.CancelFunc
 var productsCollection *mongo.Collection
 var productsPricesCollection *mongo.Collection
 var mockupTemplatesCollection *mongo.Collection
+var mockupStylesCollection *mongo.Collection
 var variantsCollection *mongo.Collection
 
 var cacheMaxAge int64 = 86400
@@ -36,6 +37,7 @@ func InitPrintfulDB(config config.Database) {
 	productsCollection = client.Database(config.DBName).Collection("products")
 	productsPricesCollection = client.Database(config.DBName).Collection("products_prices")
 	mockupTemplatesCollection = client.Database(config.DBName).Collection("mockup_templates")
+	mockupStylesCollection = client.Database(config.DBName).Collection("mockup_styles")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
 
 	createUniqueIndex(productsCollection, "id", []string{"id"}, true)
@@ -45,6 +47,7 @@ func InitPrintfulDB(config config.Database) {
 	createUniqueIndex(productsPricesCollection, "currency", []string{"currency"}, false)
 	createUniqueIndex(productsPricesCollection, "product_id,currency", []string{"product_id", "currency"}, true)
 	createUniqueIndex(mockupTemplatesCollection, "product_id", []string{"product_id"}, false)
+	createUniqueIndex(mockupStylesCollection, "product_id", []string{"product_id"}, false)
 }
 
 func createUniqueIndex(collection *mongo.Collection, name string, keys []string, unique bool) {
@@ -267,6 +270,42 @@ func FindMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, bool, 
 	}
 
 	return doc.MockupTemplates, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
+}
+
+type MongoMockupStyles struct {
+	ProductID    int                          `json:"product_id" bson:"product_id"`
+	LastUpdated  int64                        `json:"last_updated" bson:"last_updated"`
+	MockupStyles []printfulmodel.MockupStyles `json:"mockup_styles" bson:"mockup_styles"`
+}
+
+func InsertMockupStyles(productID int, mockupStyles []printfulmodel.MockupStyles) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	opts := options.Replace().SetUpsert(true)
+
+	filter := bson.D{{Key: "product_id", Value: productID}}
+
+	doc := MongoMockupStyles{ProductID: productID, LastUpdated: time.Now().Unix(), MockupStyles: mockupStyles}
+	_, err := mockupStylesCollection.ReplaceOne(ctx, filter, doc, opts)
+
+	return err
+}
+
+func FindMockupStyles(productID int) ([]printfulmodel.MockupStyles, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{{Key: "product_id", Value: productID}}
+
+	r := mockupStylesCollection.FindOne(ctx, filter)
+
+	doc := MongoMockupStyles{}
+	if err := r.Decode(&doc); err != nil {
+		return nil, false, err
+	}
+
+	return doc.MockupStyles, time.Now().Unix()-doc.LastUpdated > cacheMaxAge, nil
 }
 
 type MongoVariant struct {

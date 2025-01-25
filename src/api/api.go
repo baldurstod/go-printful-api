@@ -40,6 +40,8 @@ func ApiHandler(c *gin.Context) {
 		err = getSimilarVariants(c, request.Params)
 	case "get-templates":
 		err = getTemplates(c, request.Params)
+	case "get-styles":
+		err = getStyles(c, request.Params)
 	case "get-printfiles":
 		err = getPrintfiles(c, request.Params)
 	case "create-sync-product":
@@ -151,6 +153,19 @@ func getTemplates(c *gin.Context, params map[string]interface{}) error {
 	}
 
 	jsonSuccess(c, templates)
+
+	return nil
+}
+
+func getStyles(c *gin.Context, params map[string]interface{}) error {
+	styles, err := printful.GetMockupStyles(int(params["product_id"].(float64)))
+	log.Println(params)
+
+	if err != nil {
+		return err
+	}
+
+	jsonSuccess(c, styles)
 
 	return nil
 }

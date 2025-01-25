@@ -381,6 +381,16 @@ func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) 
 	return templates, nil
 }
 
+func GetMockupStyles(productID int) ([]printfulmodel.MockupStyles, error) {
+	styles, _, err := mongo.FindMockupStyles(productID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return styles, nil
+}
+
 type GetPrintfilesResponse struct {
 	Code   int                            `json:"code"`
 	Result printfulAPIModel.PrintfileInfo `json:"result"`

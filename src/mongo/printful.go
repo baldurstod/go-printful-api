@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 	"go-printful-api/src/config"
 	"log"
 	"time"
@@ -161,13 +162,35 @@ func InsertProduct(product *printfulmodel.Product) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
 	defer cancel()
 
+	variantIds, err := getProductVariantIds(product.ID)
+	if err != nil {
+		return fmt.Errorf("error in InsertProduct: %w", err)
+	}
+
+	product.CatalogVariantIDs = variantIds
+
 	opts := options.Replace().SetUpsert(true)
 
 	filter := bson.D{{Key: "id", Value: product.ID}}
 	doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
-	_, err := productsCollection.ReplaceOne(ctx, filter, doc, opts)
+	_, err = productsCollection.ReplaceOne(ctx, filter, doc, opts)
 
 	return err
+}
+
+func getProductVariantIds(productId int) ([]int, error) {
+	//Update product variants
+	variantIDs := make([]int, 0, 20)
+	variants, _, err := FindVariants(productId)
+	if err != nil {
+		return nil, fmt.Errorf("error while finding variants in getProductVariantIds: %w", err)
+	}
+
+	for _, variant := range variants {
+		variantIDs = append(variantIDs, variant.ID)
+	}
+
+	return variantIDs, err
 }
 
 func UpdateProductVariantIds(id int, variantIds []int) error {

@@ -294,21 +294,14 @@ type GetCountriesResponse struct {
 	Result []printfulAPIModel.Country `json:"result"`
 }
 
-func GetCountries() ([]printfulAPIModel.Country, error) {
-	resp, err := fetchRateLimited("GET", PRINTFUL_COUNTRIES_API, "", nil, nil)
+func GetCountries() ([]printfulmodel.Country, error) {
+	countries, err := mongo.FindCountries()
+
 	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to get printful response")
+		return nil, err
 	}
 
-	response := GetCountriesResponse{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response")
-	}
-
-	return response.Result, nil
+	return countries, nil
 }
 
 type GetProductsResponse struct {

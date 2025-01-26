@@ -27,3 +27,31 @@ func InsertCountry(country *printfulmodel.Country) error {
 
 	return err
 }
+
+func FindCountries() ([]printfulmodel.Country, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{}
+
+	cursor, err := countriesCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	countries := make([]printfulmodel.Country, 0, 400)
+	for cursor.Next(context.TODO()) {
+		doc := MongoCountry{}
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+
+		countries = append(countries, doc.Country)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return countries, nil
+}

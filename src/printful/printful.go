@@ -443,7 +443,8 @@ func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 		return nil, err
 	}
 
-	variantsIDs := make([]int, 0)
+	variantsIDs := make(map[int]int, 0) //TODO: revert to slice
+	variantsIDs[variantID] = variantID
 	/*TODO
 	for _, v := range productInfo.Variants {
 		//log.Println("GetSimilarVariants", v)
@@ -455,7 +456,14 @@ func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 	}
 	*/
 
-	return variantsIDs, nil
+	keys := make([]int, len(variantsIDs))
+	i := 0
+	for k := range variantsIDs {
+		keys[i] = k
+		i++
+	}
+
+	return keys, nil
 }
 
 func matchPrintFile(printfileInfo *printfulAPIModel.PrintfileInfo, variantID1 int, variantID2 int, placement string) bool {

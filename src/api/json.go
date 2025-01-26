@@ -1,14 +1,18 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func jsonError(c *gin.Context, e error) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": false,
-		"error":   e.Error(),
+		"error": gin.H{
+			"code":    0,
+			"message": e.Error(),
+		},
 	})
 }
 

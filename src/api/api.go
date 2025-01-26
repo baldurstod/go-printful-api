@@ -42,8 +42,6 @@ func ApiHandler(c *gin.Context) {
 		err = getTemplates(c, request.Params)
 	case "get-styles":
 		err = getStyles(c, request.Params)
-	case "get-printfiles":
-		err = getPrintfiles(c, request.Params)
 	case "create-sync-product":
 		err = createSyncProduct(c, request.Params)
 	case "get-sync-product":
@@ -166,19 +164,6 @@ func getStyles(c *gin.Context, params map[string]interface{}) error {
 	}
 
 	jsonSuccess(c, styles)
-
-	return nil
-}
-
-func getPrintfiles(c *gin.Context, params map[string]interface{}) error {
-	templates, err := printful.GetPrintfiles(int(params["product_id"].(float64)))
-	log.Println(params)
-
-	if err != nil {
-		return err
-	}
-
-	jsonSuccess(c, templates)
 
 	return nil
 }

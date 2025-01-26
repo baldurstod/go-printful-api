@@ -384,39 +384,6 @@ func GetMockupStyles(productID int) ([]printfulmodel.MockupStyles, error) {
 	return styles, nil
 }
 
-type GetPrintfilesResponse struct {
-	Code   int                            `json:"code"`
-	Result printfulAPIModel.PrintfileInfo `json:"result"`
-}
-
-func GetPrintfiles(productID int) (*printfulAPIModel.PrintfileInfo, error) {
-	headers := map[string]string{
-		"Authorization": "Bearer " + printfulConfig.AccessToken,
-	}
-
-	resp, err := fetchRateLimited("GET", PRINTFUL_MOCKUP_GENERATOR_API, "/printfiles/"+strconv.Itoa(productID), headers, nil)
-	if err != nil {
-		return nil, errors.New("unable to get printful response")
-	}
-
-	response := GetPrintfilesResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response")
-	}
-
-	if response.Code != 200 {
-		log.Println(err)
-		return nil, errors.New("printful returned an error")
-	}
-
-	p := &(response.Result)
-
-	return p, nil
-}
-
 func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 	variant, err := GetVariant(variantID)
 	if err != nil {
@@ -431,10 +398,11 @@ func GetSimilarVariants(variantID int, placement string) ([]int, error) {
 
 	//log.Println("GetSimilarVariants", productInfo)
 	/*printfileInfo*/
-	_, err = GetPrintfiles(variant.CatalogProductID)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		_, err = GetPrintfiles(variant.CatalogProductID)
+		if err != nil {
+			return nil, err
+		}*/
 
 	variantsIDs := make(map[int]int, 0) //TODO: revert to slice
 	variantsIDs[variantID] = variantID

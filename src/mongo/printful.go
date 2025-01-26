@@ -20,6 +20,7 @@ var productsPricesCollection *mongo.Collection
 var mockupTemplatesCollection *mongo.Collection
 var mockupStylesCollection *mongo.Collection
 var variantsCollection *mongo.Collection
+var countriesCollection *mongo.Collection
 
 var cacheMaxAge int64 = 86400
 
@@ -40,6 +41,7 @@ func InitPrintfulDB(config config.Database) {
 	mockupTemplatesCollection = client.Database(config.DBName).Collection("mockup_templates")
 	mockupStylesCollection = client.Database(config.DBName).Collection("mockup_styles")
 	variantsCollection = client.Database(config.DBName).Collection("variants")
+	countriesCollection = client.Database(config.DBName).Collection("countries")
 
 	createUniqueIndex(productsCollection, "id", []string{"id"}, true)
 	createUniqueIndex(variantsCollection, "id", []string{"id"}, true)
@@ -49,6 +51,7 @@ func InitPrintfulDB(config config.Database) {
 	createUniqueIndex(productsPricesCollection, "product_id,currency", []string{"product_id", "currency"}, true)
 	createUniqueIndex(mockupTemplatesCollection, "product_id", []string{"product_id"}, false)
 	createUniqueIndex(mockupStylesCollection, "product_id", []string{"product_id"}, false)
+	createUniqueIndex(countriesCollection, "code", []string{"code"}, false)
 }
 
 func createUniqueIndex(collection *mongo.Collection, name string, keys []string, unique bool) {

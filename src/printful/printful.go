@@ -336,6 +336,15 @@ func GetProduct(productID int) (*printfulmodel.Product, error) {
 	return nil, errors.New("unable to find product")
 }
 
+func GetProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, error) {
+	product, _, err := mongo.FindProductPrices(productID, currency)
+	if err == nil {
+		return product, nil
+	}
+
+	return nil, errors.New("unable to find product")
+}
+
 func GetVariants(productID int) ([]printfulmodel.Variant, error) {
 	variants, _, err := mongo.FindVariants(productID)
 	if err == nil {

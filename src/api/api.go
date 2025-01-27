@@ -34,6 +34,8 @@ func ApiHandler(c *gin.Context) {
 		err = getProducts(c)
 	case "get-product":
 		err = getProduct(c, request.Params)
+	case "get-product-prices":
+		err = getProductPrices(c, request.Params)
 	case "get-variant":
 		err = getVariant(c, request.Params)
 	case "get-similar-variants":
@@ -104,6 +106,21 @@ func getProduct(c *gin.Context, params map[string]interface{}) error {
 		"product":  product,
 		"variants": variants,
 	})
+
+	return nil
+}
+
+func getProductPrices(c *gin.Context, params map[string]interface{}) error {
+	productID := int(params["product_id"].(float64))
+	currency := params["currency"].(string)
+
+	prices, err := printful.GetProductPrices(productID, currency)
+
+	if err != nil {
+		return err
+	}
+
+	jsonSuccess(c, prices)
 
 	return nil
 }

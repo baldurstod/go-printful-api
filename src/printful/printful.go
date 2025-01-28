@@ -337,12 +337,52 @@ func GetProduct(productID int) (*printfulmodel.Product, error) {
 }
 
 func GetProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, error) {
-	product, _, err := mongo.FindProductPrices(productID, currency)
-	if err == nil {
-		return product, nil
+	productPrices, _, err := mongo.FindProductPrices(productID, currency)
+	if err != nil {
+		return nil, errors.New("unable to find product prices")
 	}
 
-	return nil, errors.New("unable to find product")
+	for i := range productPrices.Product.Placements {
+		placement := &productPrices.Product.Placements[i]
+
+		placement.Price, err = applyMarkup(placement.Price, printfulConfig.Markup) //(1 + printfulConfig.Markup/100)
+		if err != nil {
+			return nil, errors.New("failed to format product price")
+		}
+
+		placement.DiscountedPrice, err = applyMarkup(placement.DiscountedPrice, printfulConfig.Markup) //(1 + printfulConfig.Markup/100)
+		if err != nil {
+			return nil, errors.New("failed to format product price")
+		}
+	}
+
+	for i := range productPrices.Variants {
+		variant := &productPrices.Variants[i]
+		for j := range variant.Techniques {
+			technique := &variant.Techniques[j]
+			technique.Price, err = applyMarkup(technique.Price, printfulConfig.Markup) //(1 + printfulConfig.Markup/100)
+			if err != nil {
+				return nil, errors.New("failed to format product price")
+			}
+
+			technique.DiscountedPrice, err = applyMarkup(technique.DiscountedPrice, printfulConfig.Markup) //(1 + printfulConfig.Markup/100)
+			if err != nil {
+				return nil, errors.New("failed to format product price")
+			}
+		}
+	}
+
+	return productPrices, nil
+}
+
+func applyMarkup(price string, pct float64) (string, error) {
+	p, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		return "", err
+	}
+
+	p *= (1 + pct*0.01)
+	return strconv.FormatFloat(p, 'f', 2, 64), nil
 }
 
 func GetVariants(productID int) ([]printfulmodel.Variant, error) {

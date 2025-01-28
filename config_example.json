@@ -21,6 +21,7 @@
 		"simulateTaskKey": "",
 		"taskInterval": 20000,
 		"mockupDirectory": "./var/mockups/",
-		"images_url": "https://example.com/"
+		"images_url": "https://example.com/",
+		"markup": 20
 	}
 }

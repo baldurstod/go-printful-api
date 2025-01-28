@@ -171,3 +171,14 @@ func TestTemplatesWithMultipleTechniques(t *testing.T) {
 	log.Println("total", count, len(variants))
 
 }
+
+func TestProductPrices(t *testing.T) {
+	prices, err := printful.GetProductPrices(679, "USD")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	log.Println("prices", prices)
+
+}

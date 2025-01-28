@@ -33,6 +33,7 @@ func initEngine() *gin.Engine {
 	}))
 
 	r.POST("/api", api.ApiHandler)
+	r.GET("/image/:id", api.ImageHandler)
 
 	return r
 }

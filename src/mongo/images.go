@@ -65,3 +65,18 @@ func UploadImage(filename string, img image.Image) error {
 
 	return nil
 }
+
+func GetImage(filename string) ([]byte, error) {
+	downloadStream, err := imagesBucket.OpenDownloadStreamByName(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer downloadStream.Close()
+
+	p := make([]byte, downloadStream.GetFile().Length)
+	if _, err = downloadStream.Read(p); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}

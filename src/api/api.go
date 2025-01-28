@@ -1,15 +1,22 @@
 package api
 
 import (
+	"encoding/base64"
 	"errors"
 	"go-printful-api/src/model"
 	"go-printful-api/src/model/requests"
+	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
+	"image"
+	"image/png"
 	"log"
 	_ "net/http"
+	"strings"
 
+	"github.com/baldurstod/randstr"
 	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/mapstructure"
+	"golang.org/x/image/draw"
 )
 
 type ApiRequest struct {
@@ -55,6 +62,8 @@ func ApiHandler(c *gin.Context) {
 		err = calculateTaxRate(c, request.Params)
 	case "create-order":
 		err = createOrder(c, request.Params)
+	case "add-image":
+		err = addImage(c, request.Params)
 	default:
 		jsonError(c, NotFoundError{})
 		return
@@ -272,5 +281,81 @@ func createOrder(c *gin.Context, params map[string]interface{}) error {
 
 	jsonSuccess(c, order)
 
+	return nil
+}
+
+func addImage(c *gin.Context, params map[string]interface{}) error {
+	addImageRequest := requests.AddImageRequest{}
+	err := mapstructure.Decode(params, &addImageRequest)
+	if err != nil {
+		log.Println(err)
+		return errors.New("Error while decoding params")
+	}
+
+	b64data := addImageRequest.Image[strings.IndexByte(addImageRequest.Image, ',')+1:] // Remove data:image/png;base64,
+
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(b64data))
+	config, err := png.DecodeConfig(reader)
+	if err != nil {
+		return errors.New("Error while decoding image")
+	}
+
+	if config.Width > 20000 || config.Height > 20000 {
+		return errors.New("image too large")
+	}
+
+	img, err := png.Decode(base64.NewDecoder(base64.StdEncoding, strings.NewReader(b64data)))
+	if err != nil {
+		return errors.New("Error while decoding image")
+	}
+
+	newWidth, newHeight := 200, 200
+	scaledImage := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+	srcRectangle := img.Bounds()
+	dstRectangle := scaledImage.Bounds()
+
+	scrWidth := srcRectangle.Dx()
+	scrHeigh := srcRectangle.Dy()
+
+	log.Println(scrWidth, scrHeigh)
+	//dstWidth := dstRectangle.Dx()
+	//dstHeigh := dstRectangle.Dy()
+
+	srcRatio := float64(scrWidth) / float64(scrHeigh)
+
+	if srcRatio > 1 {
+		// width > heigh
+		h := int(float64(newHeight) / srcRatio)
+		dstRectangle.Min.Y = (newHeight - h) / 2
+		dstRectangle.Max.Y = dstRectangle.Min.Y + h
+	} else if srcRatio < 1 {
+		// heigh > width
+		w := int(float64(newWidth) * srcRatio)
+		dstRectangle.Min.X = (newWidth - w) / 2
+		dstRectangle.Max.X = dstRectangle.Min.X + w
+		log.Println(dstRectangle)
+	}
+
+	draw.CatmullRom.Scale(scaledImage, dstRectangle, img, srcRectangle, draw.Over, nil)
+
+	filename := randstr.String(32)
+	log.Println(filename)
+
+	err = mongo.UploadImage(filename, img)
+	if err != nil {
+		log.Println(err)
+		return errors.New("failed to save image")
+	}
+
+	err = mongo.UploadImage(filename+"_thumb", scaledImage)
+	if err != nil {
+		log.Println(err)
+		return errors.New("failed to save thumbnail")
+	}
+
+	jsonSuccess(c, map[string]interface{}{
+		"image_url": "",
+		"thumb_url": "",
+	})
 	return nil
 }

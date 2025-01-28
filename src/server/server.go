@@ -11,8 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ReleaseMode = "true"
-
 func StartServer(config config.HTTP) {
 	engine := initEngine()
 
@@ -22,9 +20,7 @@ func StartServer(config config.HTTP) {
 }
 
 func initEngine() *gin.Engine {
-	if ReleaseMode == "true" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)

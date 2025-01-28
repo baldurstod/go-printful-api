@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"go-printful-api/src/model"
+	"go-printful-api/src/model/requests"
 	"go-printful-api/src/printful"
 	"log"
 	_ "net/http"
@@ -215,7 +216,7 @@ func getSyncProduct(c *gin.Context, params map[string]interface{}) error {
 }
 
 func calculateShippingRates(c *gin.Context, params map[string]interface{}) error {
-	calculateShippingRatesRequest := model.CalculateShippingRates{}
+	calculateShippingRatesRequest := requests.CalculateShippingRates{}
 	err := mapstructure.Decode(params, &calculateShippingRatesRequest)
 	if err != nil {
 		log.Println(err)
@@ -235,7 +236,7 @@ func calculateShippingRates(c *gin.Context, params map[string]interface{}) error
 }
 
 func calculateTaxRate(c *gin.Context, params map[string]interface{}) error {
-	calculateTaxRateRequest := model.CalculateTaxRate{}
+	calculateTaxRateRequest := requests.CalculateTaxRate{}
 	err := mapstructure.Decode(params, &calculateTaxRateRequest)
 	if err != nil {
 		log.Println(err)
@@ -257,7 +258,7 @@ func calculateTaxRate(c *gin.Context, params map[string]interface{}) error {
 func createOrder(c *gin.Context, params map[string]interface{}) error {
 	log.Println("<<<<<<<<<<<<<<<<<<<<<<", params)
 
-	createOrderRequest := model.CreateOrderRequest{}
+	createOrderRequest := requests.CreateOrderRequest{}
 	err := mapstructure.Decode(params, &createOrderRequest)
 	if err != nil {
 		log.Println(err)

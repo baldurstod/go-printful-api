@@ -16,6 +16,7 @@ import (
 	"encoding/base64"
 	"go-printful-api/src/config"
 	"go-printful-api/src/model"
+	"go-printful-api/src/model/requests"
 	"go-printful-api/src/mongo"
 	"image"
 	"image/png"
@@ -655,7 +656,7 @@ func GetSyncProduct(syncProductID int64) (*printfulAPIModel.SyncProductInfo, err
 	return p, nil
 }
 
-func CalculateShippingRates(datas model.CalculateShippingRates) ([]schemas.ShippingInfo, error) {
+func CalculateShippingRates(datas requests.CalculateShippingRates) ([]schemas.ShippingInfo, error) {
 	body := map[string]interface{}{}
 	err := mapstructure.Decode(datas, &body)
 	if err != nil {
@@ -689,7 +690,7 @@ func CalculateShippingRates(datas model.CalculateShippingRates) ([]schemas.Shipp
 	return response.Result, nil
 }
 
-func CalculateTaxRate(datas model.CalculateTaxRate) (*schemas.TaxInfo, error) {
+func CalculateTaxRate(datas requests.CalculateTaxRate) (*schemas.TaxInfo, error) {
 	body := map[string]interface{}{}
 	err := mapstructure.Decode(datas, &body)
 	if err != nil {
@@ -728,7 +729,7 @@ type CreateOrderResponse struct {
 	Result schemas.Order `json:"result"`
 }
 
-func CreateOrder(request model.CreateOrderRequest) (*schemas.Order, error) {
+func CreateOrder(request requests.CreateOrderRequest) (*schemas.Order, error) {
 	/*body := map[string]interface{}{
 		"sync_product": map[string]interface{}{
 			"name":      datas.Name,

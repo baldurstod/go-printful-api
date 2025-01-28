@@ -1,4 +1,4 @@
-package model
+package requests
 
 import (
 	printfulAPIModel "github.com/baldurstod/printful-api-model"

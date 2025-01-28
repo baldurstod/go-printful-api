@@ -740,11 +740,13 @@ func CreateOrder(request requests.CreateOrderRequest) (*schemas.Order, error) {
 
 	log.Println(body)*/
 	body := map[string]interface{}{}
-	err := mapstructure.Decode(request.Order, &body)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("error while decoding request")
-	}
+	/*
+		err := mapstructure.Decode(request.Order, &body)
+		if err != nil {
+			log.Println(err)
+			return nil, errors.New("error while decoding request")
+		}
+	*/
 
 	log.Println(body)
 

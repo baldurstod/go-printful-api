@@ -15,7 +15,3 @@ type CalculateShippingRates struct {
 type CalculateTaxRate struct {
 	Recipient schemas.TaxAddressInfo `mapstructure:"recipient"`
 }
-
-type CreateOrderRequest struct {
-	Order schemas.Order `mapstructure:"order"`
-}

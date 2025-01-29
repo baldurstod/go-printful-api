@@ -7,6 +7,7 @@ type Config struct {
 		Images   Database `json:"images"`
 	} `json:"databases"`
 	Printful Printful `json:"printful"`
+	Api      Printful `json:"api"`
 }
 
 type HTTP struct {
@@ -29,4 +30,8 @@ type Printful struct {
 	MockupDirectory string  `json:"mockup_directory"`
 	ImagesURL       string  `json:"images_url"`
 	Markup          float64 `json:"markup"`
+}
+
+type Api struct {
+	ImagesURL string `json:"images_url"`
 }

@@ -16,6 +16,6 @@ type CalculateTaxRate struct {
 	Recipient schemas.TaxAddressInfo `mapstructure:"recipient"`
 }
 
-type AddImageRequest struct {
-	Image string `mapstructure:"image"`
+type AddImagesRequest struct {
+	Images []string `mapstructure:"image"`
 }

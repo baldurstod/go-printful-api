@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"errors"
+	"go-printful-api/src/config"
 	"go-printful-api/src/model"
 	"go-printful-api/src/model/requests"
 	"go-printful-api/src/mongo"
@@ -11,6 +12,7 @@ import (
 	"image/png"
 	"log"
 	_ "net/http"
+	"net/url"
 	"strings"
 
 	"github.com/baldurstod/randstr"
@@ -18,6 +20,12 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/image/draw"
 )
+
+var apiConfig config.Api
+
+func SetApiConfig(config config.Api) {
+	apiConfig = config
+}
 
 type ApiRequest struct {
 	Action  string                 `json:"action" binding:"required"`
@@ -62,8 +70,8 @@ func ApiHandler(c *gin.Context) {
 		err = calculateTaxRate(c, request.Params)
 	case "create-order":
 		err = createOrder(c, request.Params)
-	case "add-image":
-		err = addImage(c, request.Params)
+	case "add-images":
+		err = addImages(c, request.Params)
 	default:
 		jsonError(c, NotFoundError{})
 		return
@@ -284,29 +292,48 @@ func createOrder(c *gin.Context, params map[string]interface{}) error {
 	return nil
 }
 
-func addImage(c *gin.Context, params map[string]interface{}) error {
-	addImageRequest := requests.AddImageRequest{}
+func addImages(c *gin.Context, params map[string]interface{}) error {
+	addImageRequest := requests.AddImagesRequest{}
 	err := mapstructure.Decode(params, &addImageRequest)
 	if err != nil {
 		log.Println(err)
 		return errors.New("Error while decoding params")
 	}
 
-	b64data := addImageRequest.Image[strings.IndexByte(addImageRequest.Image, ',')+1:] // Remove data:image/png;base64,
+	imageURLS := make([]string, len(addImageRequest.Images))
+	thumbURLS := make([]string, len(addImageRequest.Images))
+	for i, image := range addImageRequest.Images {
+		image, thumb, err := addImage(image)
+		if err != nil {
+			return err
+		}
+		imageURLS[i] = image
+		thumbURLS[i] = thumb
+	}
+
+	jsonSuccess(c, map[string]interface{}{
+		"image_urls": imageURLS,
+		"thumb_urls": thumbURLS,
+	})
+	return nil
+}
+
+func addImage(data string) (string, string, error) {
+	b64data := data[strings.IndexByte(data, ',')+1:] // Remove data:image/png;base64,
 
 	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(b64data))
 	config, err := png.DecodeConfig(reader)
 	if err != nil {
-		return errors.New("Error while decoding image")
+		return "", "", errors.New("Error while decoding image")
 	}
 
 	if config.Width > 20000 || config.Height > 20000 {
-		return errors.New("image too large")
+		return "", "", errors.New("image too large")
 	}
 
 	img, err := png.Decode(base64.NewDecoder(base64.StdEncoding, strings.NewReader(b64data)))
 	if err != nil {
-		return errors.New("Error while decoding image")
+		return "", "", errors.New("Error while decoding image")
 	}
 
 	newWidth, newHeight := 200, 200
@@ -344,18 +371,24 @@ func addImage(c *gin.Context, params map[string]interface{}) error {
 	err = mongo.UploadImage(filename, img)
 	if err != nil {
 		log.Println(err)
-		return errors.New("failed to save image")
+		return "", "", errors.New("failed to save image")
 	}
 
 	err = mongo.UploadImage(filename+"_thumb", scaledImage)
 	if err != nil {
 		log.Println(err)
-		return errors.New("failed to save thumbnail")
+		return "", "", errors.New("failed to save thumbnail")
 	}
 
-	jsonSuccess(c, map[string]interface{}{
-		"image_url": "",
-		"thumb_url": "",
-	})
-	return nil
+	imageURL, err := url.JoinPath(apiConfig.ImagesURL, "/", filename)
+	if err != nil {
+		return "", "", errors.New("unable to create image url")
+	}
+
+	thumbnailURL, err := url.JoinPath(apiConfig.ImagesURL, "/", filename+"_thumb")
+	if err != nil {
+		return "", "", errors.New("unable to create thumbnail url")
+	}
+
+	return imageURL, thumbnailURL, nil
 }

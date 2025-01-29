@@ -23,5 +23,8 @@
 		"mockupDirectory": "./var/mockups/",
 		"images_url": "https://example.com/",
 		"markup": 20
+	},
+	"api": {
+		"images_url": "https://example.com/"
 	}
 }

@@ -17,5 +17,5 @@ type CalculateTaxRate struct {
 }
 
 type AddImagesRequest struct {
-	Images []string `mapstructure:"image"`
+	Images []string `mapstructure:"images"`
 }

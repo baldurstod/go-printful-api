@@ -302,6 +302,7 @@ func addImages(c *gin.Context, params map[string]interface{}) error {
 
 	imageURLS := make([]string, len(addImageRequest.Images))
 	thumbURLS := make([]string, len(addImageRequest.Images))
+
 	for i, image := range addImageRequest.Images {
 		image, thumb, err := addImage(image)
 		if err != nil {

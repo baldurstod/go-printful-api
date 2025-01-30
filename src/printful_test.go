@@ -13,8 +13,6 @@ import (
 	"testing"
 )
 
-var wg sync.WaitGroup
-
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	_, filename, _, _ := runtime.Caller(0)
@@ -32,19 +30,23 @@ func init() {
 }
 
 func RefreshAllProducts() {
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		printful.RefreshAllProducts("USD", true)
 	}()
+	wg.Wait()
 }
 
 func RefreshCountries() {
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		printful.RefreshCountries()
 	}()
+	wg.Wait()
 }
 
 func initConfig() error {
@@ -130,12 +132,10 @@ func TestTemplates(t *testing.T) {
 
 func TestRefreshAllProducts(t *testing.T) {
 	RefreshAllProducts()
-	wg.Wait()
 }
 
 func TestRefreshCountries(t *testing.T) {
 	RefreshCountries()
-	wg.Wait()
 }
 
 func TestTemplatesWithMultipleTechniques(t *testing.T) {

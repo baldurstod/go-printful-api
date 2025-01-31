@@ -44,6 +44,8 @@ func ApiHandler(c *gin.Context) {
 	}
 
 	switch request.Action {
+	case "get-categories":
+		err = getCategories(c)
 	case "get-countries":
 		err = getCountries(c)
 	case "get-products":
@@ -80,6 +82,18 @@ func ApiHandler(c *gin.Context) {
 	if err != nil {
 		jsonError(c, err)
 	}
+}
+
+func getCategories(c *gin.Context) error {
+	categories, err := printful.GetCategories()
+
+	if err != nil {
+		return err
+	}
+
+	jsonSuccess(c, categories)
+
+	return nil
 }
 
 func getCountries(c *gin.Context) error {

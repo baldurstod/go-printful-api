@@ -290,6 +290,16 @@ func refreshStyles(productID int, useCache bool) error {
 	return nil
 }
 
+func GetCategories() ([]printfulmodel.Category, error) {
+	categories, err := mongo.FindCategories()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
 type GetCountriesResponse struct {
 	Code   int                        `json:"code"`
 	Result []printfulAPIModel.Country `json:"result"`

@@ -56,10 +56,10 @@ func ApiHandler(c *gin.Context) {
 		err = getVariant(c, request.Params)
 	case "get-similar-variants":
 		err = getSimilarVariants(c, request.Params)
-	case "get-templates":
-		err = getTemplates(c, request.Params)
-	case "get-styles":
-		err = getStyles(c, request.Params)
+	case "get-mockup-templates":
+		err = getMockupTemplates(c, request.Params)
+	case "get-mockup-styles":
+		err = getMockupStyles(c, request.Params)
 	case "create-sync-product":
 		err = createSyncProduct(c, request.Params)
 	case "get-sync-product":
@@ -177,7 +177,7 @@ func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 	return nil
 }
 
-func getTemplates(c *gin.Context, params map[string]interface{}) error {
+func getMockupTemplates(c *gin.Context, params map[string]interface{}) error {
 	templates, err := printful.GetMockupTemplates(int(params["product_id"].(float64)))
 	log.Println(params)
 
@@ -190,7 +190,7 @@ func getTemplates(c *gin.Context, params map[string]interface{}) error {
 	return nil
 }
 
-func getStyles(c *gin.Context, params map[string]interface{}) error {
+func getMockupStyles(c *gin.Context, params map[string]interface{}) error {
 	styles, err := printful.GetMockupStyles(int(params["product_id"].(float64)))
 	log.Println(params)
 

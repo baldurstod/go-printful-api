@@ -39,16 +39,6 @@ func RefreshAllProducts() {
 	wg.Wait()
 }
 
-func RefreshCountries() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		printful.RefreshCountries()
-	}()
-	wg.Wait()
-}
-
 func initConfig() error {
 	var err error
 	var content []byte
@@ -135,7 +125,11 @@ func TestRefreshAllProducts(t *testing.T) {
 }
 
 func TestRefreshCountries(t *testing.T) {
-	RefreshCountries()
+	printful.RefreshCountries()
+}
+
+func TestRefreshCategories(t *testing.T) {
+	printful.RefreshCategories()
 }
 
 func TestTemplatesWithMultipleTechniques(t *testing.T) {

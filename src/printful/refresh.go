@@ -17,3 +17,16 @@ func RefreshCountries() error {
 	}
 	return nil
 }
+
+func RefreshCategories() error {
+	categories, err := printfulClient.GetCatalogCategories()
+
+	if err != nil {
+		return fmt.Errorf("error in RefreshCategories while fetching categories: %w", err)
+	}
+
+	for _, category := range categories {
+		mongo.InsertCategory(&category)
+	}
+	return nil
+}

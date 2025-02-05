@@ -28,6 +28,10 @@ github.com/baldurstod/go-printful-sdk v0.2.3 h1:UwoYJEzZrfaqDvrWSddnvTc9JKiojeJD
 github.com/baldurstod/go-printful-sdk v0.2.3/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
 github.com/baldurstod/go-printful-sdk v0.2.5 h1:APOtJWD/9AqsjtsVENAlvmQc/P7kR1LEfpSgC/btDT4=
 github.com/baldurstod/go-printful-sdk v0.2.5/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
+github.com/baldurstod/go-printful-sdk v0.2.6 h1:JVImKQus0yJ4VJqNuwosAHr7oHvsUCmtM6BQzjI5NYI=
+github.com/baldurstod/go-printful-sdk v0.2.6/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
+github.com/baldurstod/go-printful-sdk v0.2.7 h1:SBoiBTQZl3Zho9jAZFl0r4eEnn7UVWcAW8z265938QQ=
+github.com/baldurstod/go-printful-sdk v0.2.7/go.mod h1:zfhQrqtWPNgm5uhGax5YcPEaTnw1es2LBbRfUXRQy2M=
 github.com/baldurstod/printful-api-model v0.0.37 h1:k9ph3hcoJsPmGW41UKs/G3zNfouD18vX+HdYr7zt/ls=
 github.com/baldurstod/printful-api-model v0.0.37/go.mod h1:Gv/rZUWjm1miHgwqae0W9NcFohomreyqtqnvIH+dqeg=
 github.com/baldurstod/randstr v0.0.1 h1:GcG40Py50HXuTvqAKMZP+ex0IDpxXH8vBNMKLwCL51o=

@@ -153,7 +153,7 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	}
 
 	for _, product := range products {
-		if err = refreshVariants(product.ID, useCache); err != nil {
+		if err = refreshVariants(product.ID, product.VariantCount, useCache); err != nil {
 			log.Println("Error while refreshing product variants", product.ID, err)
 		}
 
@@ -173,7 +173,7 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	return nil
 }
 
-func refreshVariants(productID int, useCache bool) error {
+func refreshVariants(productID int, count int, useCache bool) error {
 	//log.Println("Refreshing variants for product", productID)
 
 	var variants []printfulmodel.Variant
@@ -181,8 +181,8 @@ func refreshVariants(productID int, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindVariants(productID)
-		if err != nil {
+		variants, outdated, err = mongo.FindVariants(productID)
+		if err != nil || len(variants) != count {
 			outdated = true
 		}
 	}
@@ -204,11 +204,9 @@ func refreshVariants(productID int, useCache bool) error {
 				}
 			}
 
-			if len(variantIDs) > 0 {
-				if err = mongo.UpdateProductVariantIds(productID, variantIDs); err != nil {
-					return fmt.Errorf("error in refreshVariants: %w", err)
+			if err = mongo.UpdateProductVariantIds(productID, variantIDs); err != nil {
+				return fmt.Errorf("error in refreshVariants: %w", err)
 
-				}
 			}
 		}
 	}

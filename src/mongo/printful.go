@@ -165,7 +165,7 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 }
 
 func InsertProduct(product *printfulmodel.Product) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5005*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	variantIds, err := getProductVariantIds(product.ID)
@@ -174,6 +174,7 @@ func InsertProduct(product *printfulmodel.Product) error {
 	}
 
 	product.CatalogVariantIDs = variantIds
+	product.VariantCount = len(variantIds)
 
 	opts := options.Replace().SetUpsert(true)
 
@@ -205,7 +206,10 @@ func UpdateProductVariantIds(id int, variantIds []int) error {
 
 	filter := bson.D{{Key: "id", Value: id}}
 
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "product.catalog_variant_ids", Value: variantIds}}}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "product.catalog_variant_ids", Value: variantIds},
+		{Key: "product.variant_count", Value: len(variantIds)},
+	}}}
 
 	//doc := MongoProduct{ID: product.ID, LastUpdated: time.Now().Unix(), Product: *product}
 	_, err := productsCollection.UpdateOne(ctx, filter, update)

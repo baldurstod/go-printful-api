@@ -199,7 +199,9 @@ func getMockupTemplates(c *gin.Context, params map[string]interface{}) error {
 		return err
 	}
 
-	jsonSuccess(c, templates)
+	jsonSuccess(c, map[string]interface{}{
+		"templates": templates,
+	})
 
 	return nil
 }

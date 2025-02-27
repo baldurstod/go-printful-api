@@ -214,7 +214,9 @@ func getMockupStyles(c *gin.Context, params map[string]interface{}) error {
 		return err
 	}
 
-	jsonSuccess(c, styles)
+	jsonSuccess(c, map[string]interface{}{
+		"styles": styles,
+	})
 
 	return nil
 }

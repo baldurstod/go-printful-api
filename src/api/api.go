@@ -172,18 +172,15 @@ func getVariant(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
-
 	log.Println("getSimilarVariants", params)
 
-	p, placementOk := params["placement"]
-	var placement string
-	if !placementOk {
-		placement = "default"
-	} else {
-		placement = p.(string)
+	getSimilarVariantsPlacement := make([]printful.GetSimilarVariantsPlacement, 0)
+	err := mapstructure.Decode(params["placements"], &getSimilarVariantsPlacement)
+	if err != nil {
+		return err
 	}
 
-	variantIds, err := printful.GetSimilarVariants(int(params["variant_id"].(float64)), placement)
+	variantIds, err := printful.GetSimilarVariants(int(params["variant_id"].(float64)), getSimilarVariantsPlacement)
 	log.Println(variantIds, err)
 
 	jsonSuccess(c, variantIds)

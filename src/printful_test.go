@@ -176,3 +176,24 @@ func TestProductPrices(t *testing.T) {
 	log.Println("prices", prices)
 
 }
+
+func TestGetSimilarVariants(t *testing.T) {
+	testCases := make(map[int][]printful.GetSimilarVariantsPlacement)
+
+	testCases[19662] = []printful.GetSimilarVariantsPlacement{
+		{Placement: "chest_left_dtf", Technique: "dtfilm", Orientation: "any"},
+	}
+
+	testCases[20251] = []printful.GetSimilarVariantsPlacement{
+		{Placement: "default", Technique: "uv", Orientation: "any"},
+	}
+
+	for variantID, placements := range testCases {
+		variants, err := printful.GetSimilarVariants(variantID, placements)
+		if err != nil {
+			t.Error(err)
+		}
+		log.Printf("similar variants for %d %v", variantID, variants)
+	}
+
+}

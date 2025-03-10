@@ -1,15 +1,16 @@
 package requests
 
 import (
-	printfulAPIModel "github.com/baldurstod/printful-api-model"
 	"github.com/baldurstod/printful-api-model/schemas"
+
+	printfulsdk "github.com/baldurstod/go-printful-sdk/model"
 )
 
 type CalculateShippingRates struct {
-	Recipient printfulAPIModel.AddressInfo `mapstructure:"recipient"`
-	Items     []printfulAPIModel.ItemInfo  `mapstructure:"items"`
-	Currency  string                       `mapstructure:"currency"`
-	Locale    string                       `mapstructure:"locale"`
+	Recipient printfulsdk.ShippingRatesAddress                 `mapstructure:"recipient"`
+	Items     []printfulsdk.CatalogOrWarehouseShippingRateItem `mapstructure:"items"`
+	Currency  string                                           `mapstructure:"currency"`
+	Locale    string                                           `mapstructure:"locale"`
 }
 
 type CalculateTaxRate struct {

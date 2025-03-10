@@ -714,38 +714,13 @@ func GetSyncProduct(syncProductID int64) (*printfulAPIModel.SyncProductInfo, err
 	return p, nil
 }
 
-func CalculateShippingRates(datas requests.CalculateShippingRates) ([]schemas.ShippingInfo, error) {
-	body := map[string]interface{}{}
-	err := mapstructure.Decode(datas, &body)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("error while decoding params")
-	}
-
-	log.Println(body)
-
-	headers := map[string]string{
-		"Authorization": "Bearer " + printfulConfig.AccessToken,
-	}
-
-	resp, err := fetchRateLimited("POST", PRINTFUL_SHIPPING_API, "/rates", headers, body)
+func CalculateShippingRates(datas requests.CalculateShippingRates) ([]printfulmodel.ShippingRate, error) {
+	shippingRates, err := printfulClient.CalculateShippingRates(datas.Recipient, datas.Items, printfulsdk.WithCurrency(datas.Currency), printfulsdk.WithLanguage(datas.Locale))
 	if err != nil {
 		return nil, errors.New("unable to get printful response")
 	}
-	defer resp.Body.Close()
 
-	//response := map[string]interface{}{}
-	response := responses.ShippingRates{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response")
-	}
-	log.Println(response)
-
-	//p := &(response.Result)
-
-	return response.Result, nil
+	return shippingRates, nil
 }
 
 func CalculateTaxRate(datas requests.CalculateTaxRate) (*schemas.TaxInfo, error) {

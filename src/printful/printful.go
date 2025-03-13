@@ -9,15 +9,15 @@ import (
 	printfulsdk "github.com/baldurstod/go-printful-sdk"
 	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
 	printfulAPIModel "github.com/baldurstod/printful-api-model"
+
+	"github.com/baldurstod/go-printful-api-model/requests"
 	"github.com/baldurstod/printful-api-model/responses"
 	"github.com/baldurstod/printful-api-model/schemas"
 
-	//"io/ioutil"
 	"bytes"
 	"encoding/base64"
 	"go-printful-api/src/config"
 	"go-printful-api/src/model"
-	"go-printful-api/src/model/requests"
 	"go-printful-api/src/mongo"
 	"image"
 	"image/png"
@@ -762,7 +762,7 @@ type CreateOrderResponse struct {
 	Result schemas.Order `json:"result"`
 }
 
-func CreateOrder(request requests.CreateOrderRequest) (*printfulmodel.Order, error) {
+func CreateOrder(request requests.CreateOrder) (*printfulmodel.Order, error) {
 	opts := make([]printfulsdk.RequestOption, 0, 5)
 
 	if request.ExternalID != "" {

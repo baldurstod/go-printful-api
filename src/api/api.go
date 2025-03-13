@@ -5,7 +5,7 @@ import (
 	"errors"
 	"go-printful-api/src/config"
 	"go-printful-api/src/model"
-	"go-printful-api/src/model/requests"
+	removeme "go-printful-api/src/model/requests"
 	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
 	"image"
@@ -14,6 +14,8 @@ import (
 	_ "net/http"
 	"net/url"
 	"strings"
+
+	"github.com/baldurstod/go-printful-api-model/requests"
 
 	"github.com/baldurstod/randstr"
 	"github.com/gin-gonic/gin"
@@ -290,7 +292,7 @@ func calculateTaxRate(c *gin.Context, params map[string]interface{}) error {
 func createOrder(c *gin.Context, params map[string]interface{}) error {
 	log.Println("<<<<<<<<<<<<<<<<<<<<<<", params)
 
-	createOrderRequest := requests.CreateOrderRequest{}
+	createOrderRequest := requests.CreateOrder{}
 	err := mapstructure.Decode(params, &createOrderRequest)
 	if err != nil {
 		log.Println(err)
@@ -308,7 +310,7 @@ func createOrder(c *gin.Context, params map[string]interface{}) error {
 }
 
 func addImages(c *gin.Context, params map[string]interface{}) error {
-	addImageRequest := requests.AddImagesRequest{}
+	addImageRequest := removeme.AddImagesRequest{}
 	err := mapstructure.Decode(params, &addImageRequest)
 	if err != nil {
 		log.Println(err)

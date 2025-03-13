@@ -5,6 +5,10 @@ import (
 )
 
 type CreateOrderRequest struct {
-	Recipient model.Address       `json:"recipient" bson:"recipient"`
-	Items     []model.CatalogItem `json:"items" bson:"items"`
+	ExternalID    string               `json:"external_id" bson:"external_id" mapstructure:"external_id"`
+	Shipping      string               `json:"shipping" bson:"shipping" mapstructure:"shipping"`
+	Recipient     model.Address        `json:"recipient" bson:"recipient"`
+	OrderItems    []model.CatalogItem  `json:"order_items" bson:"order_items"`
+	Customization *model.Customization `json:"customization" bson:"customization" mapstructure:"customization"`
+	RetailCosts   *model.RetailCosts2  `json:"retail_costs" bson:"retail_costs" mapstructure:"retail_costs"`
 }

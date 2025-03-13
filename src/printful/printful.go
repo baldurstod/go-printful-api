@@ -762,7 +762,42 @@ type CreateOrderResponse struct {
 	Result schemas.Order `json:"result"`
 }
 
-func CreateOrder(request requests.CreateOrderRequest) (*schemas.Order, error) {
+func CreateOrder(request requests.CreateOrderRequest) (*printfulmodel.Order, error) {
+	opts := make([]printfulsdk.RequestOption, 0, 5)
+
+	if request.ExternalID != "" {
+		opts = append(opts, printfulsdk.SetOrderExternalID(request.ExternalID))
+	}
+
+	if request.Shipping != "" {
+		opts = append(opts, printfulsdk.SetOrderShippingMethod(request.Shipping))
+	}
+
+	if request.Customization != nil {
+		opts = append(opts, printfulsdk.SetOrderCustomization(request.Customization))
+	}
+
+	if request.RetailCosts != nil {
+		opts = append(opts, printfulsdk.SetOrderRetailCosts(request.RetailCosts))
+	}
+
+	/*
+
+		ExternalID    string              `json:"external_id" bson:"external_id" mapstructure:"external_id"`
+		Shipping      string              `json:"shipping" bson:"shipping" mapstructure:"shipping"`
+		Recipient     model.Address       `json:"recipient" bson:"recipient"`
+		OrderItems    []model.CatalogItem `json:"order_items" bson:"order_items"`
+		Customization model.Customization `json:"customization" bson:"customization" mapstructure:"customization"`
+		RetailCosts   model.RetailCosts2  `json:"retail_costs" bson:"retail_costs" mapstructure:"retail_costs"`
+	*/
+
+	order, err := printfulClient.CreateOrder(request.Recipient, request.OrderItems, opts...)
+	if err != nil {
+		return nil, errors.New("unable to get printful response")
+	}
+
+	return order, nil
+
 	/*body := map[string]interface{}{
 		"sync_product": map[string]interface{}{
 			"name":      datas.Name,
@@ -772,39 +807,40 @@ func CreateOrder(request requests.CreateOrderRequest) (*schemas.Order, error) {
 	}
 
 	log.Println(body)*/
-	body := map[string]interface{}{}
+	//body := map[string]interface{}{}
 	/*
-		err := mapstructure.Decode(request.Order, &body)
+			err := mapstructure.Decode(request.Order, &body)
+			if err != nil {
+				log.Println(err)
+				return nil, errors.New("error while decoding request")
+			}
+		* /
+
+		log.Println(body)
+
+		headers := map[string]string{
+			"Authorization": "Bearer " + printfulConfig.AccessToken,
+		}
+
+		resp, err := fetchRateLimited("POST", PRINTFUL_ORDERS_API, "", headers, body)
+		if err != nil {
+			return nil, errors.New("unable to get printful response")
+		}
+
+		//body2, _ := ioutil.ReadAll(resp.Body)
+		//log.Println(string(body2))
+
+		response := CreateOrderResponse{}
+		err = json.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
 			log.Println(err)
-			return nil, errors.New("error while decoding request")
+			return nil, errors.New("unable to decode printful response")
 		}
+
+		log.Println(response)
+
+		p := &(response.Result)
+
+		return p, nil
 	*/
-
-	log.Println(body)
-
-	headers := map[string]string{
-		"Authorization": "Bearer " + printfulConfig.AccessToken,
-	}
-
-	resp, err := fetchRateLimited("POST", PRINTFUL_ORDERS_API, "", headers, body)
-	if err != nil {
-		return nil, errors.New("unable to get printful response")
-	}
-
-	//body2, _ := ioutil.ReadAll(resp.Body)
-	//log.Println(string(body2))
-
-	response := CreateOrderResponse{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("unable to decode printful response")
-	}
-
-	log.Println(response)
-
-	p := &(response.Result)
-
-	return p, nil
 }

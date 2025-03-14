@@ -304,7 +304,9 @@ func createOrder(c *gin.Context, params map[string]interface{}) error {
 	order, err := printful.CreateOrder(createOrderRequest)
 	log.Println(order, err)
 
-	jsonSuccess(c, order)
+	jsonSuccess(c, map[string]interface{}{
+		"order": order,
+	})
 
 	return nil
 }

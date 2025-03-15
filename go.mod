@@ -3,6 +3,7 @@ module go-printful-api
 go 1.22.4
 
 require (
+	github.com/baldurstod/go-printful-api-model v0.1.6
 	github.com/baldurstod/go-printful-sdk v0.2.20
 	github.com/baldurstod/printful-api-model v0.0.37
 	github.com/baldurstod/randstr v0.0.1
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/baldurstod/go-printful-api-model v0.1.6 // indirect
 	github.com/bytedance/sonic v1.12.6 // indirect
 	github.com/bytedance/sonic/loader v0.2.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

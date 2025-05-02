@@ -535,17 +535,6 @@ func findTemplate(templates []printfulmodel.MockupTemplates, variantID int, plac
 	return &templates[idx]
 }
 
-func matchPrintFile(printfileInfo *printfulAPIModel.PrintfileInfo, variantID1 int, variantID2 int, placement string) bool {
-	//log.Println(printfileInfo)
-	printfile1 := printfileInfo.GetPrintfile(variantID1, placement)
-	printfile2 := printfileInfo.GetPrintfile(variantID2, placement)
-
-	if (printfile1 != nil) && (printfile2 != nil) {
-		return (printfile1.Width == printfile2.Width) && (printfile1.Height == printfile2.Height)
-	}
-	return false
-}
-
 type CreateSyncProductResponse struct {
 	Code   int                 `json:"code"`
 	Result schemas.SyncProduct `json:"result"`

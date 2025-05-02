@@ -521,11 +521,8 @@ func findTemplate(templates []printfulmodel.MockupTemplates, variantID int, plac
 		}
 
 		idx := slices.IndexFunc(t.CatalogVariantIDs, func(id int) bool { return id == variantID })
-		if idx == -1 {
-			return false
-		}
 
-		return true
+		return idx != -1
 	})
 
 	if idx == -1 {

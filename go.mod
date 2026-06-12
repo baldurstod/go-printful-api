@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/baldurstod/go-printful-api-model v0.1.6
-	github.com/baldurstod/go-printful-sdk v0.2.20
+	github.com/baldurstod/go-printful-sdk v0.2.24
 	github.com/baldurstod/printful-api-model v0.0.37
 	github.com/baldurstod/randstr v0.0.1
 	github.com/gin-contrib/cors v1.7.3
@@ -32,6 +32,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

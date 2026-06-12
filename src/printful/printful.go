@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/model"
 	"go-printful-api/src/mongo"
 	"image"
@@ -143,14 +144,17 @@ func fetchRateLimited(method string, apiURL string, path string, headers map[str
 	return resp, err
 }
 
-func RefreshAllProducts(currency string, useCache bool) error {
-	products, err := printfulClient.GetCatalogProducts()
+func RefreshAllProducts(language string, currency string, useCache bool) error {
+	products, err := printfulClient.GetCatalogProducts(printfulsdk.WithLanguage(language))
 	if err != nil {
 		return errors.New("unable to get printful response")
 	}
 
 	for _, product := range products {
-		mongo.InsertProduct(&product)
+		err := database.InsertProduct(&product, language)
+		if err != nil {
+			log.Println("error in RefreshAllProducts:", err)
+		}
 	}
 
 	for _, product := range products {
@@ -182,7 +186,10 @@ func refreshVariants(productID int, count int, useCache bool) error {
 	var err error
 
 	if useCache {
-		variants, outdated, err = mongo.FindVariants(productID)
+		variants, outdated, err = database.FindVariants(productID)
+		if err != nil {
+			log.Println("error in refreshVariants:", err)
+		}
 		if err != nil || len(variants) != count {
 			outdated = true
 		}
@@ -200,7 +207,7 @@ func refreshVariants(productID int, count int, useCache bool) error {
 
 			for _, variant := range variants {
 				variantIDs = append(variantIDs, variant.ID)
-				if err = mongo.InsertVariant(&variant); err != nil {
+				if err = database.InsertVariant(&variant); err != nil {
 					return fmt.Errorf("error in refreshVariants: %w", err)
 				}
 			}
@@ -220,7 +227,7 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindProductPrices(productID, currency)
+		_, outdated, err = database.FindProductPrices(productID, currency)
 		if err != nil {
 			outdated = true
 		}
@@ -228,11 +235,14 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 
 	if outdated {
 		log.Println("Prices for product", productID, "currency", currency, "are outdated, refreshing")
-		prices, err = printfulClient.GetProductPrices(productID)
+		prices, err = printfulClient.GetProductPrices(productID, printfulsdk.WithCurrency(currency))
 		if err != nil {
 			return fmt.Errorf("error in refreshPrices: %w", err)
 		} else {
-			mongo.InsertProductPrices(prices)
+			err = database.InsertProductPrices(prices)
+			if err != nil {
+				log.Println("error while refreshPrices:", err)
+			}
 		}
 	}
 

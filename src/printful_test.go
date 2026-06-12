@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+
+	printfulsdk "github.com/baldurstod/go-printful-sdk"
 )
 
 func init() {
@@ -27,14 +29,15 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
-func RefreshAllProducts() {
+func RefreshAllProducts(language string, currency string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		printful.RefreshAllProducts("USD", true)
+		printful.RefreshAllProducts(language, currency, true)
 	}()
 	wg.Wait()
 }
@@ -121,7 +124,11 @@ func TestTemplates(t *testing.T) {
 }
 
 func TestRefreshAllProducts(t *testing.T) {
-	RefreshAllProducts()
+	RefreshAllProducts("fr_FR", "USD")
+	return
+	for _, lang := range printfulsdk.Languages {
+		RefreshAllProducts(lang, "USD")
+	}
 }
 
 func TestRefreshCountries(t *testing.T) {
@@ -129,7 +136,9 @@ func TestRefreshCountries(t *testing.T) {
 }
 
 func TestRefreshCategories(t *testing.T) {
-	printful.RefreshCategories()
+	for _, lang := range printfulsdk.Languages {
+		printful.RefreshCategories(lang)
+	}
 }
 
 func TestTemplatesWithMultipleTechniques(t *testing.T) {

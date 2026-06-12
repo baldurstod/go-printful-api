@@ -2,7 +2,10 @@ package printful
 
 import (
 	"fmt"
-	"go-printful-api/src/mongo"
+	"go-printful-api/src/database"
+	"log"
+
+	printfulsdk "github.com/baldurstod/go-printful-sdk"
 )
 
 func RefreshCountries() error {
@@ -13,20 +16,26 @@ func RefreshCountries() error {
 	}
 
 	for _, country := range countries {
-		mongo.InsertCountry(&country)
+		err = database.InsertCountry(&country)
+		if err != nil {
+			log.Println("error in RefreshCountries:", err)
+		}
 	}
 	return nil
 }
 
-func RefreshCategories() error {
-	categories, err := printfulClient.GetCatalogCategories()
+func RefreshCategories(language string) error {
+	categories, err := printfulClient.GetCatalogCategories(printfulsdk.WithLanguage(language))
 
 	if err != nil {
 		return fmt.Errorf("error in RefreshCategories while fetching categories: %w", err)
 	}
 
 	for _, category := range categories {
-		mongo.InsertCategory(&category)
+		err = database.InsertCategory(&category, language)
+		if err != nil {
+			log.Println("error in RefreshCategories:", err)
+		}
 	}
 	return nil
 }

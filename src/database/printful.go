@@ -2,17 +2,27 @@ package database
 
 import (
 	"database/sql"
+	"go-printful-api/src/config"
 	"log"
 
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
-var cacheMaxAge int64 = 86400
+var printfulDb *sql.DB
+var imagesDb *sql.DB
+var cacheMaxAge int64 = 864000
 
-func OpenPostgre(dataSourceName string) {
+func InitPrintfulDB(config config.Database) {
+	printfulDb = openPostgre(config.Datasource)
+}
+
+func InitImagesDB(config config.Database) {
+	imagesDb = openPostgre(config.Datasource)
+}
+
+func openPostgre(dataSourceName string) *sql.DB {
 	var err error
-	db, err = sql.Open("postgres", dataSourceName)
+	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,10 +34,14 @@ func OpenPostgre(dataSourceName string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return db
 }
 
 func ClosePostgre() {
-	if db != nil {
-		db.Close()
+	if printfulDb != nil {
+		printfulDb.Close()
+	}
+	if imagesDb != nil {
+		imagesDb.Close()
 	}
 }

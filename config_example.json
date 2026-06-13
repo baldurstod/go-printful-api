@@ -6,10 +6,12 @@
 	},
 	"databases": {
 		"printful": {
+			"datasource":"postgres://user:pass@localhost/db",
 			"connect_uri": "mongodb://localhost:27017",
 			"db_name": "printful"
 		},
 		"images": {
+			"datasource":"postgres://user:pass@localhost/db",
 			"connect_uri": "mongodb://localhost:27017",
 			"db_name": "images",
 			"bucket_name": "images"

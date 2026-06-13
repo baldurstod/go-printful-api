@@ -12,7 +12,7 @@ import (
 )
 
 func InsertVariant(variant *printfulmodel.Variant) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
@@ -21,7 +21,7 @@ func InsertVariant(variant *printfulmodel.Variant) error {
 		return fmt.Errorf("failed to marshal variant.Availability: <%w>", err)
 	}
 
-	_, err = db.Exec(`INSERT INTO variants (id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated)
+	_, err = printfulDb.Exec(`INSERT INTO variants (id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	ON CONFLICT (id) DO UPDATE SET
 	name = $2,
@@ -53,14 +53,14 @@ func InsertVariant(variant *printfulmodel.Variant) error {
 }
 
 func FindVariants(productID int) (variants []printfulmodel.Variant, outdated bool, err error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	outdated = false
 
 	query := `SELECT id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated FROM variants WHERE catalog_product_id = $1;`
-	res, err := db.Query(query, productID)
+	res, err := printfulDb.Query(query, productID)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to execute query "+query+"in FindVariants: <%w>", err)
 	}
@@ -112,12 +112,12 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 }
 
 func FindVariant(variantID int) (*printfulmodel.Variant, bool, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated FROM variants WHERE id = $1;`
-	row := db.QueryRow(query, variantID)
+	row := printfulDb.QueryRow(query, variantID)
 
 	var id int
 	var name string

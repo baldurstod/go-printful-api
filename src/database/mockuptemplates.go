@@ -11,7 +11,7 @@ import (
 )
 
 func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.MockupTemplates) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
@@ -20,7 +20,7 @@ func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.Mockup
 		return fmt.Errorf("failed to marshal mockupTemplates: <%w>", err)
 	}
 
-	_, err = db.Exec(`INSERT INTO mockup_templates (product_id, mockup_templates, last_updated)
+	_, err = printfulDb.Exec(`INSERT INTO mockup_templates (product_id, mockup_templates, last_updated)
 	VALUES ($1, $2, $3)
 	ON CONFLICT (product_id) DO UPDATE SET
 	mockup_templates = $2,
@@ -38,12 +38,12 @@ func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.Mockup
 }
 
 func FindMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, bool, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT mockup_templates, last_updated FROM mockup_templates WHERE product_id = $1;`
-	row := db.QueryRow(query, productID)
+	row := printfulDb.QueryRow(query, productID)
 
 	var mockupTemplates string
 	var lastUpdated int64

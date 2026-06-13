@@ -57,6 +57,8 @@ func initConfig() error {
 	printful.SetPrintfulConfig(config.Printful)
 	mongo.InitPrintfulDB(config.Databases.Printful)
 	mongo.InitImagesDB(config.Databases.Images)
+	database.InitPrintfulDB(config.Databases.Printful)
+	database.InitImagesDB(config.Databases.Images)
 	return nil
 }
 

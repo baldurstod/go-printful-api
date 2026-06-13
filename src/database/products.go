@@ -11,7 +11,7 @@ import (
 )
 
 func InsertProduct(product *printfulmodel.Product, language string) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
@@ -40,7 +40,7 @@ func InsertProduct(product *printfulmodel.Product, language string) error {
 		catalogVariantIDs = []int{}
 	}
 
-	_, err = db.Exec(`INSERT INTO products (id, language, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated)
+	_, err = printfulDb.Exec(`INSERT INTO products (id, language, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 	ON CONFLICT (id, language) DO UPDATE SET
 	main_category_id = $3,
@@ -87,12 +87,12 @@ func InsertProduct(product *printfulmodel.Product, language string) error {
 }
 
 func FindProducts(language string) ([]printfulmodel.Product, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products WHERE language = $1;`
-	res, err := db.Query(query, language)
+	res, err := printfulDb.Query(query, language)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query "+query+"in FindProducts: <%w>", err)
 	}
@@ -173,12 +173,12 @@ func FindProducts(language string) ([]printfulmodel.Product, error) {
 }
 
 func FindProduct(productID int, language string) (*printfulmodel.Product, bool, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products WHERE id = $1 AND language = $2;`
-	row := db.QueryRow(query, productID, language)
+	row := printfulDb.QueryRow(query, productID, language)
 
 	var id int
 	var mainCategoryID int
@@ -246,11 +246,11 @@ func FindProduct(productID int, language string) (*printfulmodel.Product, bool, 
 }
 
 func UpdateProductVariantIds(productID int, variantIds []int) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
-	_, err := db.Exec(`UPDATE products SET variant_count = $1, catalog_variant_ids = $2 WHERE id = $3`,
+	_, err := printfulDb.Exec(`UPDATE products SET variant_count = $1, catalog_variant_ids = $2 WHERE id = $3`,
 		len(variantIds),
 		variantIds,
 		productID,

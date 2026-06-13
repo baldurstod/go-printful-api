@@ -11,7 +11,7 @@ import (
 )
 
 func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
@@ -20,7 +20,7 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 		return fmt.Errorf("failed to marshal productPrices: <%w>", err)
 	}
 
-	_, err = db.Exec(`INSERT INTO products_prices (product_id, currency, product_prices, last_updated)
+	_, err = printfulDb.Exec(`INSERT INTO products_prices (product_id, currency, product_prices, last_updated)
 	VALUES ($1, $2, $3, $4)
 	ON CONFLICT (product_id, currency) DO UPDATE SET
 	product_prices = $3,
@@ -39,12 +39,12 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 }
 
 func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, bool, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT product_prices, last_updated FROM products_prices WHERE product_id = $1 AND currency = $2;`
-	row := db.QueryRow(query, productID, currency)
+	row := printfulDb.QueryRow(query, productID, currency)
 
 	var productPrices string
 	var lastUpdated int64

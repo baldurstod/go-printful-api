@@ -10,7 +10,7 @@ import (
 )
 
 func InsertCountry(country *printfulmodel.Country) error {
-	if db == nil {
+	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
@@ -19,7 +19,7 @@ func InsertCountry(country *printfulmodel.Country) error {
 		return fmt.Errorf("failed to marshal country.States: <%w>", err)
 	}
 
-	_, err = db.Exec(`INSERT INTO countries (code, name, region, states, last_updated)
+	_, err = printfulDb.Exec(`INSERT INTO countries (code, name, region, states, last_updated)
 	VALUES ($1, $2, $3, $4, $5)
 	ON CONFLICT (code) DO UPDATE SET
 	name = $2,
@@ -41,12 +41,12 @@ func InsertCountry(country *printfulmodel.Country) error {
 }
 
 func FindCountries() ([]printfulmodel.Country, error) {
-	if db == nil {
+	if printfulDb == nil {
 		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
 	query := `SELECT code, name, region, states, FROM countries;`
-	res, err := db.Query(query)
+	res, err := printfulDb.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query "+query+"in FindCountries: <%w>", err)
 	}

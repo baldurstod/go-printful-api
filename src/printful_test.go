@@ -3,6 +3,7 @@ package main_test
 import (
 	"encoding/json"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
 	"log"
@@ -60,7 +61,7 @@ func initConfig() error {
 }
 
 func TestGetProducts(t *testing.T) {
-	products, err := printful.GetProducts()
+	products, err := printful.GetProducts("en_US")
 	if err != nil {
 		t.Error(err)
 		return
@@ -76,7 +77,7 @@ func TestGetProducts(t *testing.T) {
 }
 
 func TestGetProduct(t *testing.T) {
-	products, err := printful.GetProduct(638)
+	products, err := printful.GetProduct(638, "en_US")
 	if err != nil {
 		t.Error(err)
 		return
@@ -142,7 +143,7 @@ func TestRefreshCategories(t *testing.T) {
 }
 
 func TestTemplatesWithMultipleTechniques(t *testing.T) {
-	products, err := printful.GetProducts()
+	products, err := printful.GetProducts("en_US")
 	if err != nil {
 		t.Error(err)
 		return
@@ -153,7 +154,7 @@ func TestTemplatesWithMultipleTechniques(t *testing.T) {
 	count := 0
 
 	for _, product := range products {
-		templates, _, err := mongo.FindMockupTemplates(product.ID)
+		templates, _, err := database.FindMockupTemplates(product.ID)
 		if err != nil {
 			log.Println("error while finding templates for product", product.ID, err)
 		}
@@ -198,7 +199,7 @@ func TestGetSimilarVariants(t *testing.T) {
 	}
 
 	for variantID, placements := range testCases {
-		variants, err := printful.GetSimilarVariants(variantID, placements)
+		variants, err := printful.GetSimilarVariants(variantID, placements, "en_US")
 		if err != nil {
 			t.Error(err)
 		}

@@ -83,7 +83,7 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 		if err != nil {
 			return nil, false, fmt.Errorf("failed to scan row in FindVariants: <%w>", err)
 		}
-		doc := printfulmodel.Variant{
+		variant := printfulmodel.Variant{
 			ID:               id,
 			Name:             name,
 			CatalogProductID: catalogProductID,
@@ -101,7 +101,7 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 
 		log.Println("todo: availability")
 
-		variants = append(variants, doc)
+		variants = append(variants, variant)
 	}
 
 	if err := res.Err(); err != nil {
@@ -109,4 +109,43 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 	}
 
 	return variants, outdated, nil
+}
+
+func FindVariant(variantID int) (*printfulmodel.Variant, bool, error) {
+	if db == nil {
+		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+	}
+
+	query := `SELECT id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated FROM variants WHERE id = $1;`
+	row := db.QueryRow(query, variantID)
+
+	var id int
+	var name string
+	var catalogProductID int
+	var color string
+	var colorCode string
+	var colorCode2 string
+	var image string
+	var size string
+	var availability string
+	var lastUpdated int64
+
+	err := row.Scan(&id, &name, &catalogProductID, &color, &colorCode, &colorCode2, &image, &size, &availability, &lastUpdated)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to scan row in FindProduct: <%w>", err)
+	}
+
+	variant := printfulmodel.Variant{
+		ID:               id,
+		Name:             name,
+		CatalogProductID: catalogProductID,
+		Color:            color,
+		ColorCode:        colorCode,
+		ColorCode2:       colorCode2,
+		Image:            image,
+		Size:             size,
+		//Availability:     availability,
+	}
+
+	return &variant, time.Now().Unix()-lastUpdated > cacheMaxAge, nil
 }

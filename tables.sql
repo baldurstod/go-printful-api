@@ -29,23 +29,23 @@ CREATE TABLE countries (
 	last_updated BIGINT NOT NULL
 );
 
-CREATE TYPE mockup AS (
-	id INTEGER,
-	category_name TEXT,
-	view_name TEXT,
-	restricted_to_variants INTEGER[]
-);
+--CREATE TYPE mockup AS (
+--	id INTEGER,
+--	category_name TEXT,
+--	view_name TEXT,
+--	restricted_to_variants INTEGER[]
+--);
 
-CREATE TYPE mockup_style AS (
-	placement TEXT,
-	display_name TEXT,
-	technique TEXT,
-	print_area_width REAL,
-	print_area_height REAL,
-	print_area_type TEXT,
-	dpi INTEGER,
-	mockup_styles mockup[]
-);
+--CREATE TYPE mockup_style AS (
+--	placement TEXT,
+--	display_name TEXT,
+--	technique TEXT,
+--	print_area_width REAL,
+--	print_area_height REAL,
+--	print_area_type TEXT,
+--	dpi INTEGER,
+--	mockup_styles mockup[]
+--);
 
 CREATE TABLE mockup_styles (
 	_id SERIAL,
@@ -54,31 +54,31 @@ CREATE TABLE mockup_styles (
 	last_updated BIGINT NOT NULL
 );
 
-CREATE TYPE mockup_template AS (
-	catalog_variant_ids INTEGER[],
-	placement TEXT,
-	technique TEXT,
-	image_url TEXT,
-	background_url TEXT,
-	background_color INTEGER,
-	template_width INTEGER ,
-	template_height INTEGER ,
-	print_area_width INTEGER ,
-	print_area_height INTEGER ,
-	print_area_top INTEGER ,
-	print_area_left INTEGER ,
-	template_positioning TEXT ,
-	orientation TEXT,
-	template_type TEXT,
-	role TEXT
-);
+--CREATE TYPE mockup_template AS (
+--	catalog_variant_ids INTEGER[],
+--	placement TEXT,
+--	technique TEXT,
+--	image_url TEXT,
+--	background_url TEXT,
+--	background_color INTEGER,
+--	template_width INTEGER ,
+--	template_height INTEGER ,
+--	print_area_width INTEGER ,
+--	print_area_height INTEGER ,
+--	print_area_top INTEGER ,
+--	print_area_left INTEGER ,
+--	template_positioning TEXT ,
+--	orientation TEXT,
+--	template_type TEXT,
+--	role TEXT
+--);
 
-CREATE TABLE mockup_templates (
-	_id SERIAL,
-	product_id INTEGER PRIMARY KEY,
-	mockup_templates mockup_template[],
-	last_updated BIGINT NOT NULL
-);
+--CREATE TABLE mockup_templates (
+--	_id SERIAL,
+--	product_id INTEGER PRIMARY KEY,
+--	mockup_templates mockup_template[],
+--	last_updated BIGINT NOT NULL
+--);
 
 --CREATE TYPE color AS (
 --	name TEXT,
@@ -141,12 +141,14 @@ CREATE TABLE products (
 	model TEXT,
 	image TEXT NOT NULL,
 	variant_count INTEGER NOT NULL,
+	catalog_variant_ids INTEGER[] NOT NULL,
 	is_discontinued BOOLEAN NOT NULL,
 	description TEXT NOT NULL,
 	sizes TEXT[] NOT NULL,
 	colors JSONB NOT NULL,
 	techniques JSONB NOT NULL,
 	placements JSONB NOT NULL,
+	product_options JSONB NOT NULL,
 	last_updated BIGINT NOT NULL,
 	PRIMARY KEY (id, language)
 );
@@ -201,6 +203,18 @@ CREATE TABLE products_prices (
 	product_prices JSONB NOT NULL,
 	last_updated BIGINT NOT NULL,
 	PRIMARY KEY (product_id, currency)
+);
+
+CREATE TABLE mockup_templates (
+	product_id INTEGER PRIMARY KEY,
+	mockup_templates JSONB NOT NULL,
+	last_updated BIGINT NOT NULL
+);
+
+CREATE TABLE mockup_styles (
+	product_id INTEGER PRIMARY KEY,
+	mockup_styles JSONB NOT NULL,
+	last_updated BIGINT NOT NULL
 );
 
 CREATE TABLE variants (

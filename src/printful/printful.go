@@ -197,7 +197,7 @@ func refreshVariants(productID int, count int, useCache bool) error {
 
 	if outdated {
 		log.Println("Variants for product", productID, "are outdated, refreshing")
-		variants, err = printfulClient.GetCatalogVariants(productID)
+		variants, err = printfulClient.GetCatalogVariants(productID, printfulsdk.WithLanguage("fr_FR"))
 		if err != nil {
 			//log.Println("Error while getting product variants", productID, err)
 			return fmt.Errorf("error in refreshVariants: %w", err)
@@ -212,7 +212,7 @@ func refreshVariants(productID int, count int, useCache bool) error {
 				}
 			}
 
-			if err = mongo.UpdateProductVariantIds(productID, variantIDs); err != nil {
+			if err = database.UpdateProductVariantIds(productID, variantIDs); err != nil {
 				return fmt.Errorf("error in refreshVariants: %w", err)
 
 			}
@@ -255,7 +255,7 @@ func refreshTemplates(productID int, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindMockupTemplates(productID)
+		_, outdated, err = database.FindMockupTemplates(productID)
 		if err != nil {
 			outdated = true
 		}
@@ -267,7 +267,7 @@ func refreshTemplates(productID int, useCache bool) error {
 		if err != nil {
 			return fmt.Errorf("error in refreshTemplates: %w", err)
 		} else {
-			mongo.InsertMockupTemplates(productID, templates)
+			database.InsertMockupTemplates(productID, templates)
 		}
 	}
 
@@ -280,7 +280,7 @@ func refreshStyles(productID int, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindMockupStyles(productID)
+		_, outdated, err = database.FindMockupStyles(productID)
 		if err != nil {
 			outdated = true
 		}
@@ -292,7 +292,7 @@ func refreshStyles(productID int, useCache bool) error {
 		if err != nil {
 			return fmt.Errorf("error in refreshStyles: %w", err)
 		} else {
-			mongo.InsertMockupStyles(productID, styles)
+			database.InsertMockupStyles(productID, styles)
 		}
 	}
 
@@ -300,7 +300,7 @@ func refreshStyles(productID int, useCache bool) error {
 }
 
 func GetCategories() ([]printfulmodel.Category, error) {
-	categories, err := mongo.FindCategories()
+	categories, err := database.FindCategories()
 
 	if err != nil {
 		return nil, err
@@ -315,7 +315,7 @@ type GetCountriesResponse struct {
 }
 
 func GetCountries() ([]printfulmodel.Country, error) {
-	countries, err := mongo.FindCountries()
+	countries, err := database.FindCountries()
 
 	if err != nil {
 		return nil, err
@@ -332,8 +332,8 @@ type GetProductsResponse struct {
 //var cachedProducts = make([]printfulmodel.Product, 0)
 //var cachedProductsUpdated = time.Time{}
 
-func GetProducts() ([]printfulmodel.Product, error) {
-	products, err := mongo.FindProducts()
+func GetProducts(language string) ([]printfulmodel.Product, error) {
+	products, err := database.FindProducts(language)
 
 	if err != nil {
 		return nil, err
@@ -347,8 +347,8 @@ type GetProductResponse struct {
 	Result printfulAPIModel.ProductInfo `json:"result"`
 }
 
-func GetProduct(productID int) (*printfulmodel.Product, error) {
-	product, _, err := mongo.FindProduct(productID)
+func GetProduct(productID int, language string) (*printfulmodel.Product, error) {
+	product, _, err := database.FindProduct(productID, language)
 	if err == nil {
 		return product, nil
 	}
@@ -357,7 +357,7 @@ func GetProduct(productID int) (*printfulmodel.Product, error) {
 }
 
 func GetProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, error) {
-	productPrices, _, err := mongo.FindProductPrices(productID, currency)
+	productPrices, _, err := database.FindProductPrices(productID, currency)
 	if err != nil {
 		return nil, errors.New("unable to find product prices")
 	}
@@ -406,7 +406,7 @@ func applyMarkup(price string, pct float64) (string, error) {
 }
 
 func GetVariants(productID int) ([]printfulmodel.Variant, error) {
-	variants, _, err := mongo.FindVariants(productID)
+	variants, _, err := database.FindVariants(productID)
 	if err == nil {
 		return variants, nil
 	}
@@ -420,7 +420,7 @@ type GetVariantResponse struct {
 }
 
 func GetVariant(variantID int) (*printfulmodel.Variant, error) {
-	variant, _, err := mongo.FindVariant(variantID)
+	variant, _, err := database.FindVariant(variantID)
 	if err == nil {
 		return variant, nil
 	}
@@ -434,7 +434,7 @@ type GetTemplatesResponse struct {
 }
 
 func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) {
-	templates, _, err := mongo.FindMockupTemplates(productID)
+	templates, _, err := database.FindMockupTemplates(productID)
 
 	if err != nil {
 		return nil, err
@@ -444,7 +444,7 @@ func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) 
 }
 
 func GetMockupStyles(productID int) ([]printfulmodel.MockupStyles, error) {
-	styles, _, err := mongo.FindMockupStyles(productID)
+	styles, _, err := database.FindMockupStyles(productID)
 
 	if err != nil {
 		return nil, err
@@ -459,7 +459,7 @@ type GetSimilarVariantsPlacement struct {
 	Orientation string `json:"orientation"`
 }
 
-func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement) ([]int, error) {
+func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement, language string) ([]int, error) {
 	if placements == nil {
 		return nil, errors.New("placement is nil")
 	}
@@ -469,7 +469,7 @@ func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement)
 		return nil, err
 	}
 
-	product, err := GetProduct(variant.CatalogProductID)
+	product, err := GetProduct(variant.CatalogProductID, language)
 	if err != nil {
 		return nil, err
 	}

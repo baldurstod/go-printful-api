@@ -50,7 +50,7 @@ func FindCategories() ([]printfulmodel.Category, error) {
 	query := `SELECT id, parent_id, image_url, title FROM categories;`
 	res, err := db.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query "+query+"in GetCategories: <%w>", err)
+		return nil, fmt.Errorf("failed to execute query "+query+"in FindCategories: <%w>", err)
 	}
 	defer res.Close()
 
@@ -63,15 +63,15 @@ func FindCategories() ([]printfulmodel.Category, error) {
 
 		err = res.Scan(&id, &parent_id, &image_url, &title)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row in GetCategories: <%w>", err)
+			return nil, fmt.Errorf("failed to scan row in FindCategories: <%w>", err)
 		}
-		doc := printfulmodel.Category{ID: id, ParentID: parent_id, ImageURL: image_url, Title: title}
+		category := printfulmodel.Category{ID: id, ParentID: parent_id, ImageURL: image_url, Title: title}
 
-		categories = append(categories, doc)
+		categories = append(categories, category)
 	}
 
 	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("failed to get next row in GetCategories: <%w>", err)
+		return nil, fmt.Errorf("failed to get next row in FindCategories: <%w>", err)
 	}
 
 	return categories, nil

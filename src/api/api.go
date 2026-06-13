@@ -211,13 +211,18 @@ func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 		return errors.New("Error while decoding param placements")
 	}
 
+	language, _ := params["language"].(string)
+	if !slices.Contains(printfulsdk.Languages, language) {
+		language = "en_US"
+	}
+
 	getSimilarVariantsPlacement := make([]printful.GetSimilarVariantsPlacement, 0)
 	err := mapstructure.Decode(placements, &getSimilarVariantsPlacement)
 	if err != nil {
 		return err
 	}
 
-	variantIds, err := printful.GetSimilarVariants(int(variantID), getSimilarVariantsPlacement)
+	variantIds, err := printful.GetSimilarVariants(int(variantID), getSimilarVariantsPlacement, language)
 	log.Println(variantIds, err)
 
 	jsonSuccess(c, variantIds)

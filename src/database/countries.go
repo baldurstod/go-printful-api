@@ -39,3 +39,44 @@ func InsertCountry(country *printfulmodel.Country) error {
 
 	return nil
 }
+
+func FindCountries() ([]printfulmodel.Country, error) {
+	if db == nil {
+		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+	}
+
+	query := `SELECT code, name, region, states, FROM countries;`
+	res, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query "+query+"in FindCountries: <%w>", err)
+	}
+	defer res.Close()
+
+	countries := make([]printfulmodel.Country, 0, 200)
+	for res.Next() {
+		var name string
+		var code string
+		var region string
+		var states string
+
+		err = res.Scan(&name, &code, &region, &states)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row in FindCountries: <%w>", err)
+		}
+
+		statesJson := []printfulmodel.State{}
+		if err = json.Unmarshal([]byte(states), &statesJson); err != nil {
+			return nil, err
+		}
+
+		country := printfulmodel.Country{Name: name, Code: code, Region: region, States: statesJson}
+
+		countries = append(countries, country)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get next row in FindCountries: <%w>", err)
+	}
+
+	return countries, nil
+}

@@ -43,7 +43,7 @@ func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPr
 		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
 	}
 
-	query := `SELECT product_prices, last_updated	FROM products_prices WHERE product_id = $1 AND currency = $2;`
+	query := `SELECT product_prices, last_updated FROM products_prices WHERE product_id = $1 AND currency = $2;`
 	row := db.QueryRow(query, productID, currency)
 
 	var productPrices string

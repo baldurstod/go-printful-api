@@ -13,7 +13,7 @@ import (
 
 func InsertVariant(variant *printfulmodel.Variant) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	availability, err := json.Marshal(&variant.Availability)
@@ -54,7 +54,7 @@ func InsertVariant(variant *printfulmodel.Variant) error {
 
 func FindVariants(productID int) (variants []printfulmodel.Variant, outdated bool, err error) {
 	if printfulDb == nil {
-		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, false, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	outdated = false
@@ -113,7 +113,7 @@ func FindVariants(productID int) (variants []printfulmodel.Variant, outdated boo
 
 func FindVariant(variantID int) (*printfulmodel.Variant, bool, error) {
 	if printfulDb == nil {
-		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, false, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	query := `SELECT id, name, catalog_product_id, color, color_code, color_code2, image, size, availability, last_updated FROM variants WHERE id = $1;`

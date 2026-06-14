@@ -144,14 +144,48 @@ func fetchRateLimited(method string, apiURL string, path string, headers map[str
 	return resp, err
 }
 
-func RefreshAllProducts(language string, currency string, useCache bool) error {
+func RefreshAllProducts(currency string, useCache bool) error {
+	products, err := printfulClient.GetCatalogProducts()
+	if err != nil {
+		return errors.New("unable to get printful response")
+	}
+
+	for _, product := range products {
+		err := database.InsertProduct(&product)
+		if err != nil {
+			log.Println("error in RefreshAllProducts:", err)
+		}
+	}
+
+	for _, product := range products {
+		if err = refreshVariants(product.ID, product.VariantCount, useCache); err != nil {
+			log.Println("Error while refreshing product variants", product.ID, err)
+		}
+
+		if err = refreshPrices(product.ID, currency, useCache); err != nil {
+			log.Println("Error while refreshing product prices", product.ID, err)
+		}
+
+		if err = refreshTemplates(product.ID, useCache); err != nil {
+			log.Println("Error while refreshing product templates", product.ID, err)
+		}
+
+		if err = refreshStyles(product.ID, useCache); err != nil {
+			log.Println("Error while refreshing product styles", product.ID, err)
+		}
+	}
+
+	return nil
+}
+
+func RefreshProductTranslations(language string, currency string, useCache bool) error {
 	products, err := printfulClient.GetCatalogProducts(printfulsdk.WithLanguage(language))
 	if err != nil {
 		return errors.New("unable to get printful response")
 	}
 
 	for _, product := range products {
-		err := database.InsertProduct(&product, language)
+		err := database.InsertProductTranslation(language, &product)
 		if err != nil {
 			log.Println("error in RefreshAllProducts:", err)
 		}
@@ -333,7 +367,7 @@ type GetProductsResponse struct {
 //var cachedProductsUpdated = time.Time{}
 
 func GetProducts(language string) ([]printfulmodel.Product, error) {
-	products, err := database.FindProducts(language)
+	products, err := database.FindProducts()
 
 	if err != nil {
 		return nil, err
@@ -347,13 +381,21 @@ type GetProductResponse struct {
 	Result printfulAPIModel.ProductInfo `json:"result"`
 }
 
-func GetProduct(productID int, language string) (*printfulmodel.Product, error) {
-	product, _, err := database.FindProduct(productID, language)
+func GetProduct(productID int) (*printfulmodel.Product, error) {
+	product, _, err := database.FindProduct(productID)
 	if err == nil {
 		return product, nil
 	}
 
 	return nil, errors.New("unable to find product")
+}
+
+func GetProductTranslation(productID int, language string) (*database.ProductTranslation, error) {
+	translation, err := database.FindProductTranslation(productID, language)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find translation: <%w>", err)
+	}
+	return translation, nil
 }
 
 func GetProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, error) {
@@ -459,7 +501,7 @@ type GetSimilarVariantsPlacement struct {
 	Orientation string `json:"orientation"`
 }
 
-func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement, language string) ([]int, error) {
+func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement) ([]int, error) {
 	if placements == nil {
 		return nil, errors.New("placement is nil")
 	}
@@ -469,7 +511,7 @@ func GetSimilarVariants(variantID int, placements []GetSimilarVariantsPlacement,
 		return nil, err
 	}
 
-	product, err := GetProduct(variant.CatalogProductID, language)
+	product, err := GetProduct(variant.CatalogProductID)
 	if err != nil {
 		return nil, err
 	}

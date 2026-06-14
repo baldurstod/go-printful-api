@@ -132,8 +132,7 @@ CREATE TABLE mockup_styles (
 --);
 
 CREATE TABLE products (
-	id INTEGER,
-	language TEXT,
+	id INTEGER PRIMARY KEY,
 	main_category_id INTEGER NOT NULL,
 	type TEXT NOT NULL,
 	name TEXT NOT NULL,
@@ -149,8 +148,16 @@ CREATE TABLE products (
 	techniques JSONB NOT NULL,
 	placements JSONB NOT NULL,
 	product_options JSONB NOT NULL,
+	last_updated BIGINT NOT NULL
+);
+
+CREATE TABLE product_translations (
+	product_id INTEGER,
+	language TEXT,
+	name TEXT NOT NULL,
+	description TEXT NOT NULL,
 	last_updated BIGINT NOT NULL,
-	PRIMARY KEY (id, language)
+	PRIMARY KEY (product_id, language)
 );
 
 

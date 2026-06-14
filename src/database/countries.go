@@ -11,7 +11,7 @@ import (
 
 func InsertCountry(country *printfulmodel.Country) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	j, err := json.Marshal(&country.States)
@@ -42,7 +42,7 @@ func InsertCountry(country *printfulmodel.Country) error {
 
 func FindCountries() ([]printfulmodel.Country, error) {
 	if printfulDb == nil {
-		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	query := `SELECT code, name, region, states, FROM countries;`

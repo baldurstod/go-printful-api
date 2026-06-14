@@ -12,7 +12,7 @@ import (
 
 func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	prices, err := json.Marshal(&productPrices)
@@ -40,7 +40,7 @@ func InsertProductPrices(productPrices *printfulmodel.ProductPrices) error {
 
 func FindProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, bool, error) {
 	if printfulDb == nil {
-		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, false, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	query := `SELECT product_prices, last_updated FROM products_prices WHERE product_id = $1 AND currency = $2;`

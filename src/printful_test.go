@@ -33,12 +33,22 @@ func init() {
 
 }
 
-func RefreshAllProducts(language string, currency string) {
+func RefreshAllProducts(currency string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		printful.RefreshAllProducts(language, currency, true)
+		printful.RefreshAllProducts(currency, true)
+	}()
+	wg.Wait()
+}
+
+func RefreshProductTranslations(language string, currency string) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		printful.RefreshProductTranslations(language, currency, true)
 	}()
 	wg.Wait()
 }
@@ -79,7 +89,7 @@ func TestGetProducts(t *testing.T) {
 }
 
 func TestGetProduct(t *testing.T) {
-	products, err := printful.GetProduct(638, "en_US")
+	products, err := printful.GetProduct(638)
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,10 +137,9 @@ func TestTemplates(t *testing.T) {
 }
 
 func TestRefreshAllProducts(t *testing.T) {
-	RefreshAllProducts("fr_FR", "USD")
-	return
+	RefreshAllProducts("USD")
 	for _, lang := range printfulsdk.Languages {
-		RefreshAllProducts(lang, "USD")
+		RefreshProductTranslations(lang, "USD")
 	}
 }
 
@@ -201,7 +210,7 @@ func TestGetSimilarVariants(t *testing.T) {
 	}
 
 	for variantID, placements := range testCases {
-		variants, err := printful.GetSimilarVariants(variantID, placements, "en_US")
+		variants, err := printful.GetSimilarVariants(variantID, placements)
 		if err != nil {
 			t.Error(err)
 		}

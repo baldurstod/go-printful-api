@@ -17,7 +17,7 @@ type MongoCategory struct {
 
 func InsertCategory(category *printfulmodel.Category, language string) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	_, err := printfulDb.Exec(`INSERT INTO categories (id, language, parent_id, image_url, title, last_updated)
@@ -44,7 +44,7 @@ func InsertCategory(category *printfulmodel.Category, language string) error {
 
 func FindCategories() ([]printfulmodel.Category, error) {
 	if printfulDb == nil {
-		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	query := `SELECT id, parent_id, image_url, title FROM categories;`

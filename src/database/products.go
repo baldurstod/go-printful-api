@@ -10,9 +10,9 @@ import (
 	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
 )
 
-func InsertProduct(product *printfulmodel.Product, language string) error {
+func InsertProduct(product *printfulmodel.Product) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	colors, err := json.Marshal(&product.Colors)
@@ -40,27 +40,26 @@ func InsertProduct(product *printfulmodel.Product, language string) error {
 		catalogVariantIDs = []int{}
 	}
 
-	_, err = printfulDb.Exec(`INSERT INTO products (id, language, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-	ON CONFLICT (id, language) DO UPDATE SET
-	main_category_id = $3,
-	type = $4,
-	name = $5,
-	brand = $6,
-	model = $7,
-	image = $8,
-	variant_count = $9,
-	catalog_variant_ids = $10,
-	is_discontinued = $11,
-	description = $12,
-	sizes = $13,
-	colors = $14,
-	techniques = $15,
-	placements = $16,
-	product_options = $17,
-	last_updated = $18`,
+	_, err = printfulDb.Exec(`INSERT INTO products (id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+	ON CONFLICT (id) DO UPDATE SET
+	main_category_id = $2,
+	type = $3,
+	name = $4,
+	brand = $5,
+	model = $6,
+	image = $7,
+	variant_count = $8,
+	catalog_variant_ids = $9,
+	is_discontinued = $10,
+	description = $11,
+	sizes = $12,
+	colors = $13,
+	techniques = $14,
+	placements = $15,
+	product_options = $16,
+	last_updated = $17`,
 		product.ID,
-		language,
 		product.MainCategoryID,
 		product.Type,
 		product.Name,
@@ -86,13 +85,13 @@ func InsertProduct(product *printfulmodel.Product, language string) error {
 	return nil
 }
 
-func FindProducts(language string) ([]printfulmodel.Product, error) {
+func FindProducts() ([]printfulmodel.Product, error) {
 	if printfulDb == nil {
-		return nil, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
-	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products WHERE language = $1;`
-	res, err := printfulDb.Query(query, language)
+	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products;`
+	res, err := printfulDb.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query "+query+"in FindProducts: <%w>", err)
 	}
@@ -172,13 +171,13 @@ func FindProducts(language string) ([]printfulmodel.Product, error) {
 	return products, nil
 }
 
-func FindProduct(productID int, language string) (*printfulmodel.Product, bool, error) {
+func FindProduct(productID int) (*printfulmodel.Product, bool, error) {
 	if printfulDb == nil {
-		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, false, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
-	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products WHERE id = $1 AND language = $2;`
-	row := printfulDb.QueryRow(query, productID, language)
+	query := `SELECT id, main_category_id, type, name, brand, model, image, variant_count, catalog_variant_ids, is_discontinued, description, sizes, colors, techniques, placements, product_options, last_updated FROM products WHERE id = $1;`
+	row := printfulDb.QueryRow(query, productID)
 
 	var id int
 	var mainCategoryID int
@@ -247,7 +246,7 @@ func FindProduct(productID int, language string) (*printfulmodel.Product, bool, 
 
 func UpdateProductVariantIds(productID int, variantIds []int) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	_, err := printfulDb.Exec(`UPDATE products SET variant_count = $1, catalog_variant_ids = $2 WHERE id = $3`,

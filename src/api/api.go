@@ -140,7 +140,7 @@ func getProduct(c *gin.Context, params map[string]interface{}) error {
 		language = "en_US"
 	}
 
-	product, err := printful.GetProduct(int(productID), language)
+	product, err := printful.GetProduct(int(productID))
 
 	if err != nil {
 		return err
@@ -152,9 +152,12 @@ func getProduct(c *gin.Context, params map[string]interface{}) error {
 		return err
 	}
 
+	translation, err := printful.GetProductTranslation(int(productID), language)
+
 	jsonSuccess(c, map[string]interface{}{
-		"product":  product,
-		"variants": variants,
+		"product":     product,
+		"variants":    variants,
+		"translation": translation,
 	})
 
 	return nil
@@ -211,18 +214,13 @@ func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 		return errors.New("Error while decoding param placements")
 	}
 
-	language, _ := params["language"].(string)
-	if !slices.Contains(printfulsdk.Languages, language) {
-		language = "en_US"
-	}
-
 	getSimilarVariantsPlacement := make([]printful.GetSimilarVariantsPlacement, 0)
 	err := mapstructure.Decode(placements, &getSimilarVariantsPlacement)
 	if err != nil {
 		return err
 	}
 
-	variantIds, err := printful.GetSimilarVariants(int(variantID), getSimilarVariantsPlacement, language)
+	variantIds, err := printful.GetSimilarVariants(int(variantID), getSimilarVariantsPlacement)
 	log.Println(variantIds, err)
 
 	jsonSuccess(c, variantIds)

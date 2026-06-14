@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
 	"go-printful-api/src/server"
@@ -18,6 +19,9 @@ func main() {
 			printful.SetPrintfulConfig(config.Printful)
 			mongo.InitPrintfulDB(config.Databases.Printful)
 			mongo.InitImagesDB(config.Databases.Images)
+			database.InitPrintfulDB(config.Databases.Printful)
+			database.InitImagesDB(config.Databases.Images)
+			defer database.ClosePostgre()
 			server.StartServer(config.HTTP)
 		} else {
 			log.Println("Error while reading configuration", err)

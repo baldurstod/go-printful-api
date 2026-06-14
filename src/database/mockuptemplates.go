@@ -12,7 +12,7 @@ import (
 
 func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.MockupTemplates) error {
 	if printfulDb == nil {
-		return errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	templates, err := json.Marshal(&mockupTemplates)
@@ -39,7 +39,7 @@ func InsertMockupTemplates(productID int, mockupTemplates []printfulmodel.Mockup
 
 func FindMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, bool, error) {
 	if printfulDb == nil {
-		return nil, false, errors.New("database is not initialized. Did you forgot to call openPostgre ?")
+		return nil, false, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
 	query := `SELECT mockup_templates, last_updated FROM mockup_templates WHERE product_id = $1;`

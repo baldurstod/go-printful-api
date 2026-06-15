@@ -191,24 +191,6 @@ func RefreshProductTranslations(language string, currency string, useCache bool)
 		}
 	}
 
-	for _, product := range products {
-		if err = refreshVariants(product.ID, product.VariantCount, useCache); err != nil {
-			log.Println("Error while refreshing product variants", product.ID, err)
-		}
-
-		if err = refreshPrices(product.ID, currency, useCache); err != nil {
-			log.Println("Error while refreshing product prices", product.ID, err)
-		}
-
-		if err = refreshTemplates(product.ID, useCache); err != nil {
-			log.Println("Error while refreshing product templates", product.ID, err)
-		}
-
-		if err = refreshStyles(product.ID, useCache); err != nil {
-			log.Println("Error while refreshing product styles", product.ID, err)
-		}
-	}
-
 	return nil
 }
 
@@ -248,7 +230,6 @@ func refreshVariants(productID int, count int, useCache bool) error {
 
 			if err = database.UpdateProductVariantIds(productID, variantIDs); err != nil {
 				return fmt.Errorf("error in refreshVariants: %w", err)
-
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
+	"github.com/lib/pq"
 )
 
 func InsertProduct(product *printfulmodel.Product) error {
@@ -107,7 +108,7 @@ func FindProducts() ([]printfulmodel.Product, error) {
 		var model string
 		var image string
 		var variantCount int
-		var catalogVariantIDs []int
+		var catalogVariantIDs []int32
 		var isDiscontinued bool
 		var description string
 		var sizes []string
@@ -117,7 +118,7 @@ func FindProducts() ([]printfulmodel.Product, error) {
 		var productOptions string
 		var lastUpdated int64
 
-		err = res.Scan(&id, &mainCategoryID, &productType, &name, &brand, &model, &image, &variantCount, &catalogVariantIDs, &isDiscontinued, &description, &sizes, &colors, &techniques, &placements, &productOptions, &lastUpdated)
+		err = res.Scan(&id, &mainCategoryID, &productType, &name, &brand, &model, &image, &variantCount, pq.Array(&catalogVariantIDs), &isDiscontinued, &description, pq.Array(&sizes), &colors, &techniques, &placements, &productOptions, &lastUpdated)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row in FindProducts: <%w>", err)
 		}
@@ -142,6 +143,11 @@ func FindProducts() ([]printfulmodel.Product, error) {
 			return nil, err
 		}
 
+		catalogVariantIDs2 := make([]int, len(catalogVariantIDs))
+		for i, i32 := range catalogVariantIDs {
+			catalogVariantIDs2[i] = int(i32)
+		}
+
 		product := printfulmodel.Product{
 			ID:                id,
 			MainCategoryID:    mainCategoryID,
@@ -151,7 +157,7 @@ func FindProducts() ([]printfulmodel.Product, error) {
 			Model:             model,
 			Image:             image,
 			VariantCount:      variantCount,
-			CatalogVariantIDs: catalogVariantIDs,
+			CatalogVariantIDs: catalogVariantIDs2,
 			IsDiscontinued:    isDiscontinued,
 			Description:       description,
 			Sizes:             sizes,

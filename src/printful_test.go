@@ -218,3 +218,12 @@ func TestGetSimilarVariants(t *testing.T) {
 	}
 
 }
+
+func TestFindProducts(t *testing.T) {
+	products, err := database.FindProducts()
+	if err != nil {
+		t.Error(err)
+	}
+
+	log.Println("products: ", len(products))
+}

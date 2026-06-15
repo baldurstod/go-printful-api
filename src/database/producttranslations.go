@@ -22,9 +22,9 @@ func InsertProductTranslation(language string, product *printfulmodel.Product) e
 		return errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
-	_, err := printfulDb.Exec(`INSERT INTO product_translations (id, language, name, description, last_updated)
+	_, err := printfulDb.Exec(`INSERT INTO product_translations (product_id, language, name, description, last_updated)
 	VALUES ($1, $2, $3, $4, $5)
-	ON CONFLICT (id, language) DO UPDATE SET
+	ON CONFLICT (product_id, language) DO UPDATE SET
 	name = $3,
 	description = $4,
 	last_updated = $5`,
@@ -36,7 +36,7 @@ func InsertProductTranslation(language string, product *printfulmodel.Product) e
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to insert product translation"+strconv.Itoa(product.ID)+" "+language+" : <%w>", err)
+		return fmt.Errorf("failed to insert product translation "+strconv.Itoa(product.ID)+" "+language+" : <%w>", err)
 	}
 
 	return nil

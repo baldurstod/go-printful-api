@@ -45,7 +45,7 @@ func FindCountries() ([]printfulmodel.Country, error) {
 		return nil, errors.New("database is not initialized. Did you forgot to init postgre ?")
 	}
 
-	query := `SELECT code, name, region, states, FROM countries;`
+	query := `SELECT code, name, region, states FROM countries;`
 	res, err := printfulDb.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query "+query+"in FindCountries: <%w>", err)

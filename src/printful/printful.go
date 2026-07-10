@@ -17,8 +17,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/model"
-	"go-printful-api/src/mongo"
 	"image"
 	"image/png"
 	"io"
@@ -150,7 +150,10 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	}
 
 	for _, product := range products {
-		mongo.InsertProduct(&product)
+		err := database.InsertProduct(&product)
+		if err != nil {
+			log.Println("error in RefreshAllProducts:", err)
+		}
 	}
 
 	for _, product := range products {
@@ -174,6 +177,22 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	return nil
 }
 
+func RefreshProductTranslations(language string, currency string, useCache bool) error {
+	products, err := printfulClient.GetCatalogProducts(printfulsdk.WithLanguage(language))
+	if err != nil {
+		return errors.New("unable to get printful response")
+	}
+
+	for _, product := range products {
+		err := database.InsertProductTranslation(language, &product)
+		if err != nil {
+			log.Println("error in RefreshAllProducts:", err)
+		}
+	}
+
+	return nil
+}
+
 func refreshVariants(productID int, count int, useCache bool) error {
 	//log.Println("Refreshing variants for product", productID)
 
@@ -182,7 +201,10 @@ func refreshVariants(productID int, count int, useCache bool) error {
 	var err error
 
 	if useCache {
-		variants, outdated, err = mongo.FindVariants(productID)
+		variants, outdated, err = database.FindVariants(productID)
+		if err != nil {
+			log.Println("error in refreshVariants:", err)
+		}
 		if err != nil || len(variants) != count {
 			outdated = true
 		}
@@ -190,7 +212,7 @@ func refreshVariants(productID int, count int, useCache bool) error {
 
 	if outdated {
 		log.Println("Variants for product", productID, "are outdated, refreshing")
-		variants, err = printfulClient.GetCatalogVariants(productID)
+		variants, err = printfulClient.GetCatalogVariants(productID, printfulsdk.WithLanguage("fr_FR"))
 		if err != nil {
 			//log.Println("Error while getting product variants", productID, err)
 			return fmt.Errorf("error in refreshVariants: %w", err)
@@ -200,14 +222,13 @@ func refreshVariants(productID int, count int, useCache bool) error {
 
 			for _, variant := range variants {
 				variantIDs = append(variantIDs, variant.ID)
-				if err = mongo.InsertVariant(&variant); err != nil {
+				if err = database.InsertVariant(&variant); err != nil {
 					return fmt.Errorf("error in refreshVariants: %w", err)
 				}
 			}
 
-			if err = mongo.UpdateProductVariantIds(productID, variantIDs); err != nil {
+			if err = database.UpdateProductVariantIds(productID, variantIDs); err != nil {
 				return fmt.Errorf("error in refreshVariants: %w", err)
-
 			}
 		}
 	}
@@ -220,7 +241,7 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindProductPrices(productID, currency)
+		_, outdated, err = database.FindProductPrices(productID, currency)
 		if err != nil {
 			outdated = true
 		}
@@ -228,11 +249,14 @@ func refreshPrices(productID int, currency string, useCache bool) error {
 
 	if outdated {
 		log.Println("Prices for product", productID, "currency", currency, "are outdated, refreshing")
-		prices, err = printfulClient.GetProductPrices(productID)
+		prices, err = printfulClient.GetProductPrices(productID, printfulsdk.WithCurrency(currency))
 		if err != nil {
 			return fmt.Errorf("error in refreshPrices: %w", err)
 		} else {
-			mongo.InsertProductPrices(prices)
+			err = database.InsertProductPrices(prices)
+			if err != nil {
+				log.Println("error while refreshPrices:", err)
+			}
 		}
 	}
 
@@ -245,7 +269,7 @@ func refreshTemplates(productID int, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindMockupTemplates(productID)
+		_, outdated, err = database.FindMockupTemplates(productID)
 		if err != nil {
 			outdated = true
 		}
@@ -257,7 +281,7 @@ func refreshTemplates(productID int, useCache bool) error {
 		if err != nil {
 			return fmt.Errorf("error in refreshTemplates: %w", err)
 		} else {
-			mongo.InsertMockupTemplates(productID, templates)
+			database.InsertMockupTemplates(productID, templates)
 		}
 	}
 
@@ -270,7 +294,7 @@ func refreshStyles(productID int, useCache bool) error {
 	var err error
 
 	if useCache {
-		_, outdated, err = mongo.FindMockupStyles(productID)
+		_, outdated, err = database.FindMockupStyles(productID)
 		if err != nil {
 			outdated = true
 		}
@@ -282,7 +306,7 @@ func refreshStyles(productID int, useCache bool) error {
 		if err != nil {
 			return fmt.Errorf("error in refreshStyles: %w", err)
 		} else {
-			mongo.InsertMockupStyles(productID, styles)
+			database.InsertMockupStyles(productID, styles)
 		}
 	}
 
@@ -290,7 +314,7 @@ func refreshStyles(productID int, useCache bool) error {
 }
 
 func GetCategories() ([]printfulmodel.Category, error) {
-	categories, err := mongo.FindCategories()
+	categories, err := database.FindCategories()
 
 	if err != nil {
 		return nil, err
@@ -305,7 +329,7 @@ type GetCountriesResponse struct {
 }
 
 func GetCountries() ([]printfulmodel.Country, error) {
-	countries, err := mongo.FindCountries()
+	countries, err := database.FindCountries()
 
 	if err != nil {
 		return nil, err
@@ -322,8 +346,8 @@ type GetProductsResponse struct {
 //var cachedProducts = make([]printfulmodel.Product, 0)
 //var cachedProductsUpdated = time.Time{}
 
-func GetProducts() ([]printfulmodel.Product, error) {
-	products, err := mongo.FindProducts()
+func GetProducts(language string) ([]printfulmodel.Product, error) {
+	products, err := database.FindProducts()
 
 	if err != nil {
 		return nil, err
@@ -338,7 +362,7 @@ type GetProductResponse struct {
 }
 
 func GetProduct(productID int) (*printfulmodel.Product, error) {
-	product, _, err := mongo.FindProduct(productID)
+	product, _, err := database.FindProduct(productID)
 	if err == nil {
 		return product, nil
 	}
@@ -346,8 +370,16 @@ func GetProduct(productID int) (*printfulmodel.Product, error) {
 	return nil, errors.New("unable to find product")
 }
 
+func GetProductTranslation(productID int, language string) (*database.ProductTranslation, error) {
+	translation, err := database.FindProductTranslation(productID, language)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find translation: <%w>", err)
+	}
+	return translation, nil
+}
+
 func GetProductPrices(productID int, currency string) (*printfulmodel.ProductPrices, error) {
-	productPrices, _, err := mongo.FindProductPrices(productID, currency)
+	productPrices, _, err := database.FindProductPrices(productID, currency)
 	if err != nil {
 		return nil, errors.New("unable to find product prices")
 	}
@@ -396,7 +428,7 @@ func applyMarkup(price string, pct float64) (string, error) {
 }
 
 func GetVariants(productID int) ([]printfulmodel.Variant, error) {
-	variants, _, err := mongo.FindVariants(productID)
+	variants, _, err := database.FindVariants(productID)
 	if err == nil {
 		return variants, nil
 	}
@@ -410,7 +442,7 @@ type GetVariantResponse struct {
 }
 
 func GetVariant(variantID int) (*printfulmodel.Variant, error) {
-	variant, _, err := mongo.FindVariant(variantID)
+	variant, _, err := database.FindVariant(variantID)
 	if err == nil {
 		return variant, nil
 	}
@@ -424,7 +456,7 @@ type GetTemplatesResponse struct {
 }
 
 func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) {
-	templates, _, err := mongo.FindMockupTemplates(productID)
+	templates, _, err := database.FindMockupTemplates(productID)
 
 	if err != nil {
 		return nil, err
@@ -434,7 +466,7 @@ func GetMockupTemplates(productID int) ([]printfulmodel.MockupTemplates, error) 
 }
 
 func GetMockupStyles(productID int) ([]printfulmodel.MockupStyles, error) {
-	styles, _, err := mongo.FindMockupStyles(productID)
+	styles, _, err := database.FindMockupStyles(productID)
 
 	if err != nil {
 		return nil, err
@@ -590,13 +622,13 @@ func CreateSyncProduct(datas model.CreateSyncProductDatas) (*schemas.SyncProduct
 	filename := randstr.String(32)
 	log.Println(filename)
 
-	err = mongo.UploadImage(filename, img)
+	err = database.UploadImage(filename, img)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	err = mongo.UploadImage(filename+"_thumb", scaledImage)
+	err = database.UploadImage(filename+"_thumb", scaledImage)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -666,10 +698,6 @@ type GetSyncProductResponse struct {
 }
 
 func GetSyncProduct(syncProductID int64) (*printfulAPIModel.SyncProductInfo, error) {
-	/*product, err := mongo.FindProduct(productID)
-	if err == nil {
-		return product, nil, false
-	}*/
 	headers := map[string]string{
 		"Authorization": "Bearer " + printfulConfig.AccessToken,
 	}

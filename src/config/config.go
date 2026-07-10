@@ -17,7 +17,7 @@ type HTTP struct {
 }
 
 type Database struct {
-	ConnectURI string `json:"connect_uri"`
+	Datasource string `json:"datasource"`
 	DBName     string `json:"db_name"`
 	BucketName string `json:"bucket_name"`
 }

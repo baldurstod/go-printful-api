@@ -4,18 +4,20 @@ import (
 	"encoding/base64"
 	"errors"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/model"
 	removeme "go-printful-api/src/model/requests"
-	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
 	"image"
 	"image/png"
 	"log"
 	_ "net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/baldurstod/go-printful-api-model/requests"
+	printfulsdk "github.com/baldurstod/go-printful-sdk"
 
 	"github.com/baldurstod/randstr"
 	"github.com/gin-gonic/gin"
@@ -51,7 +53,7 @@ func ApiHandler(c *gin.Context) {
 	case "get-countries":
 		err = getCountries(c)
 	case "get-products":
-		err = getProducts(c)
+		err = getProducts(c, request.Params)
 	case "get-product":
 		err = getProduct(c, request.Params)
 	case "get-product-prices":
@@ -110,8 +112,13 @@ func getCountries(c *gin.Context) error {
 	return nil
 }
 
-func getProducts(c *gin.Context) error {
-	products, err := printful.GetProducts()
+func getProducts(c *gin.Context, params map[string]interface{}) error {
+	language, _ := params["language"].(string)
+	if !slices.Contains(printfulsdk.Languages, language) {
+		language = "en_US"
+	}
+
+	products, err := printful.GetProducts(language)
 
 	if err != nil {
 		return err
@@ -123,32 +130,50 @@ func getProducts(c *gin.Context) error {
 }
 
 func getProduct(c *gin.Context, params map[string]interface{}) error {
-	productID := int(params["product_id"].(float64))
-	product, err := printful.GetProduct(productID)
+	productID, ok := params["product_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param product_id")
+	}
+
+	language, _ := params["language"].(string)
+	if !slices.Contains(printfulsdk.Languages, language) {
+		language = "en_US"
+	}
+
+	product, err := printful.GetProduct(int(productID))
 
 	if err != nil {
 		return err
 	}
 
-	variants, err := printful.GetVariants(productID)
+	variants, err := printful.GetVariants(int(productID))
 
 	if err != nil {
 		return err
 	}
+
+	translation, err := printful.GetProductTranslation(int(productID), language)
 
 	jsonSuccess(c, map[string]interface{}{
-		"product":  product,
-		"variants": variants,
+		"product":     product,
+		"variants":    variants,
+		"translation": translation,
 	})
 
 	return nil
 }
 
 func getProductPrices(c *gin.Context, params map[string]interface{}) error {
-	productID := int(params["product_id"].(float64))
-	currency := params["currency"].(string)
+	productID, ok := params["product_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param product_id")
+	}
+	currency, ok := params["currency"].(string)
+	if !ok {
+		return errors.New("Error while decoding param currency")
+	}
 
-	prices, err := printful.GetProductPrices(productID, currency)
+	prices, err := printful.GetProductPrices(int(productID), currency)
 
 	if err != nil {
 		return err
@@ -160,14 +185,18 @@ func getProductPrices(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getVariant(c *gin.Context, params map[string]interface{}) error {
-	variant, err := printful.GetVariant(int(params["variant_id"].(float64)))
+	variantID, ok := params["variant_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param variant_id")
+	}
+
+	variant, err := printful.GetVariant(int(variantID))
 	log.Println(params)
 
 	if err != nil {
 		return err
 	}
 
-	//log.Println("variant", variant)
 	jsonSuccess(c, variant)
 
 	return nil
@@ -175,14 +204,23 @@ func getVariant(c *gin.Context, params map[string]interface{}) error {
 
 func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 	log.Println("getSimilarVariants", params)
+	variantID, ok := params["variant_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param variant_id")
+	}
+
+	placements, ok := params["placements"]
+	if !ok {
+		return errors.New("Error while decoding param placements")
+	}
 
 	getSimilarVariantsPlacement := make([]printful.GetSimilarVariantsPlacement, 0)
-	err := mapstructure.Decode(params["placements"], &getSimilarVariantsPlacement)
+	err := mapstructure.Decode(placements, &getSimilarVariantsPlacement)
 	if err != nil {
 		return err
 	}
 
-	variantIds, err := printful.GetSimilarVariants(int(params["variant_id"].(float64)), getSimilarVariantsPlacement)
+	variantIds, err := printful.GetSimilarVariants(int(variantID), getSimilarVariantsPlacement)
 	log.Println(variantIds, err)
 
 	jsonSuccess(c, variantIds)
@@ -191,7 +229,12 @@ func getSimilarVariants(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getMockupTemplates(c *gin.Context, params map[string]interface{}) error {
-	templates, err := printful.GetMockupTemplates(int(params["product_id"].(float64)))
+	productID, ok := params["product_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param product_id")
+	}
+
+	templates, err := printful.GetMockupTemplates(int(productID))
 	log.Println(params)
 
 	if err != nil {
@@ -206,7 +249,12 @@ func getMockupTemplates(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getMockupStyles(c *gin.Context, params map[string]interface{}) error {
-	styles, err := printful.GetMockupStyles(int(params["product_id"].(float64)))
+	productID, ok := params["product_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param product_id")
+	}
+
+	styles, err := printful.GetMockupStyles(int(productID))
 	log.Println(params)
 
 	if err != nil {
@@ -237,7 +285,12 @@ func createSyncProduct(c *gin.Context, params map[string]interface{}) error {
 }
 
 func getSyncProduct(c *gin.Context, params map[string]interface{}) error {
-	product, err := printful.GetSyncProduct(int64(params["sync_product_id"].(float64)))
+	syncProductID, ok := params["sync_product_id"].(float64)
+	if !ok {
+		return errors.New("Error while decoding param sync_product_id")
+	}
+
+	product, err := printful.GetSyncProduct(int64(syncProductID))
 	log.Println(product, params)
 
 	if err != nil {
@@ -388,13 +441,13 @@ func addImage(data string) (string, string, error) {
 	filename := randstr.String(32)
 	log.Println(filename)
 
-	err = mongo.UploadImage(filename, img)
+	err = database.UploadImage(filename, img)
 	if err != nil {
 		log.Println(err)
 		return "", "", errors.New("failed to save image")
 	}
 
-	err = mongo.UploadImage(filename+"_thumb", scaledImage)
+	err = database.UploadImage(filename+"_thumb", scaledImage)
 	if err != nil {
 		log.Println(err)
 		return "", "", errors.New("failed to save thumbnail")

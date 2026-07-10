@@ -3,7 +3,7 @@ package main_test
 import (
 	"encoding/json"
 	"go-printful-api/src/config"
-	"go-printful-api/src/mongo"
+	"go-printful-api/src/database"
 	"go-printful-api/src/printful"
 	"log"
 	"os"
@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+
+	printfulsdk "github.com/baldurstod/go-printful-sdk"
 )
 
 func init() {
@@ -27,14 +29,25 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
-func RefreshAllProducts() {
+func RefreshAllProducts(currency string) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		printful.RefreshAllProducts("USD", true)
+		printful.RefreshAllProducts(currency, true)
+	}()
+	wg.Wait()
+}
+
+func RefreshProductTranslations(language string, currency string) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		printful.RefreshProductTranslations(language, currency, true)
 	}()
 	wg.Wait()
 }
@@ -51,13 +64,13 @@ func initConfig() error {
 		return err
 	}
 	printful.SetPrintfulConfig(config.Printful)
-	mongo.InitPrintfulDB(config.Databases.Printful)
-	mongo.InitImagesDB(config.Databases.Images)
+	database.InitPrintfulDB(config.Databases.Printful)
+	database.InitImagesDB(config.Databases.Images)
 	return nil
 }
 
 func TestGetProducts(t *testing.T) {
-	products, err := printful.GetProducts()
+	products, err := printful.GetProducts("en_US")
 	if err != nil {
 		t.Error(err)
 		return
@@ -121,7 +134,10 @@ func TestTemplates(t *testing.T) {
 }
 
 func TestRefreshAllProducts(t *testing.T) {
-	RefreshAllProducts()
+	RefreshAllProducts("USD")
+	for _, lang := range printfulsdk.Languages {
+		RefreshProductTranslations(lang, "USD")
+	}
 }
 
 func TestRefreshCountries(t *testing.T) {
@@ -129,11 +145,13 @@ func TestRefreshCountries(t *testing.T) {
 }
 
 func TestRefreshCategories(t *testing.T) {
-	printful.RefreshCategories()
+	for _, lang := range printfulsdk.Languages {
+		printful.RefreshCategories(lang)
+	}
 }
 
 func TestTemplatesWithMultipleTechniques(t *testing.T) {
-	products, err := printful.GetProducts()
+	products, err := printful.GetProducts("en_US")
 	if err != nil {
 		t.Error(err)
 		return
@@ -144,7 +162,7 @@ func TestTemplatesWithMultipleTechniques(t *testing.T) {
 	count := 0
 
 	for _, product := range products {
-		templates, _, err := mongo.FindMockupTemplates(product.ID)
+		templates, _, err := database.FindMockupTemplates(product.ID)
 		if err != nil {
 			log.Println("error while finding templates for product", product.ID, err)
 		}
@@ -196,4 +214,13 @@ func TestGetSimilarVariants(t *testing.T) {
 		log.Printf("similar variants for %d %v", variantID, variants)
 	}
 
+}
+
+func TestFindProducts(t *testing.T) {
+	products, err := database.FindProducts()
+	if err != nil {
+		t.Error(err)
+	}
+
+	log.Println("products: ", len(products))
 }

@@ -19,7 +19,6 @@ import (
 	"go-printful-api/src/config"
 	"go-printful-api/src/database"
 	"go-printful-api/src/model"
-	"go-printful-api/src/mongo"
 	"image"
 	"image/png"
 	"io"
@@ -623,13 +622,13 @@ func CreateSyncProduct(datas model.CreateSyncProductDatas) (*schemas.SyncProduct
 	filename := randstr.String(32)
 	log.Println(filename)
 
-	err = mongo.UploadImage(filename, img)
+	err = database.UploadImage(filename, img)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	err = mongo.UploadImage(filename+"_thumb", scaledImage)
+	err = database.UploadImage(filename+"_thumb", scaledImage)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -699,10 +698,6 @@ type GetSyncProductResponse struct {
 }
 
 func GetSyncProduct(syncProductID int64) (*printfulAPIModel.SyncProductInfo, error) {
-	/*product, err := mongo.FindProduct(productID)
-	if err == nil {
-		return product, nil, false
-	}*/
 	headers := map[string]string{
 		"Authorization": "Bearer " + printfulConfig.AccessToken,
 	}

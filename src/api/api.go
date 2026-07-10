@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"go-printful-api/src/config"
+	"go-printful-api/src/database"
 	"go-printful-api/src/model"
 	removeme "go-printful-api/src/model/requests"
-	"go-printful-api/src/mongo"
 	"go-printful-api/src/printful"
 	"image"
 	"image/png"
@@ -441,13 +441,13 @@ func addImage(data string) (string, string, error) {
 	filename := randstr.String(32)
 	log.Println(filename)
 
-	err = mongo.UploadImage(filename, img)
+	err = database.UploadImage(filename, img)
 	if err != nil {
 		log.Println(err)
 		return "", "", errors.New("failed to save image")
 	}
 
-	err = mongo.UploadImage(filename+"_thumb", scaledImage)
+	err = database.UploadImage(filename+"_thumb", scaledImage)
 	if err != nil {
 		log.Println(err)
 		return "", "", errors.New("failed to save thumbnail")

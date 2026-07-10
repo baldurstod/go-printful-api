@@ -9,12 +9,6 @@ import (
 	printfulmodel "github.com/baldurstod/go-printful-sdk/model"
 )
 
-type MongoCategory struct {
-	ID          int                    `json:"id" bson:"id"`
-	LastUpdated int64                  `json:"last_updated" bson:"last_updated"`
-	Category    printfulmodel.Category `json:"category" bson:"category"`
-}
-
 func InsertCategory(category *printfulmodel.Category, language string) error {
 	if printfulDb == nil {
 		return errors.New("database is not initialized. Did you forgot to init postgre ?")

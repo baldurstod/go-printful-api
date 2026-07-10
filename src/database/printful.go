@@ -10,7 +10,7 @@ import (
 
 var printfulDb *sql.DB
 var imagesDb *sql.DB
-var cacheMaxAge int64 = 864000
+var cacheMaxAge int64 = 86400
 
 func InitPrintfulDB(config config.Database) {
 	printfulDb = openPostgre(config.Datasource)

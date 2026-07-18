@@ -150,7 +150,18 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	}
 
 	for _, product := range products {
-		err := database.InsertProduct(&product)
+
+		categories, err := printfulClient.GetProductCategories(product.ID)
+		if err != nil {
+			log.Println("error in GetProductCategories:", err)
+
+		} else {
+			for _, category := range categories {
+				product.Categories = append(product.Categories, category.ID)
+			}
+		}
+
+		err = database.InsertProduct(&product)
 		if err != nil {
 			log.Println("error in RefreshAllProducts:", err)
 		}

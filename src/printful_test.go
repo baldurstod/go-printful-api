@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -86,7 +87,8 @@ func TestGetProducts(t *testing.T) {
 }
 
 func TestGetProduct(t *testing.T) {
-	products, err := printful.GetProduct(638)
+	id := 823
+	products, err := printful.GetProduct(id)
 	if err != nil {
 		t.Error(err)
 		return
@@ -94,7 +96,7 @@ func TestGetProduct(t *testing.T) {
 
 	j, _ := json.MarshalIndent(&products, "", "")
 
-	err = os.WriteFile("./var/products_638.json", j, 0666)
+	err = os.WriteFile("./var/products_"+strconv.Itoa(id)+".json", j, 0666)
 	if err != nil {
 		t.Error(err)
 		return

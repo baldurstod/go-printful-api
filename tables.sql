@@ -134,6 +134,7 @@ CREATE TABLE mockup_styles (
 CREATE TABLE products (
 	id INTEGER PRIMARY KEY,
 	main_category_id INTEGER NOT NULL,
+	categories INTEGER[] NOT NULL,
 	type TEXT NOT NULL,
 	name TEXT NOT NULL,
 	brand TEXT,

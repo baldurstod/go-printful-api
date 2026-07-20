@@ -337,7 +337,7 @@ func refreshImages(product printfulmodel.Product, useCache bool) error {
 StyleLoop:
 	for _, style := range styles {
 		for _, mockupStyle := range style.MockupStyles {
-			if mockupStyle.CategoryName == "Women's" && mockupStyle.ViewName == "Front" {
+			if strings.HasPrefix(mockupStyle.CategoryName, "Women's") && !strings.HasPrefix(mockupStyle.CategoryName, "Women's Lifestyle") && mockupStyle.ViewName == "Front" {
 				styleId = mockupStyle.Id
 				break StyleLoop
 			}

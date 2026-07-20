@@ -58,7 +58,6 @@ func InsertProduct(product printfulmodel.Product) error {
 	model = $7,
 	image = $8,
 	variant_count = $9,
-	catalog_variant_ids = $10,
 	is_discontinued = $11,
 	description = $12,
 	sizes = $13,

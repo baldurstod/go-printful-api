@@ -321,6 +321,7 @@ func refreshStyles(productID int, useCache bool) error {
 	return nil
 }
 
+// Look for women pictures for unisex products
 func refreshImages(product printfulmodel.Product, useCache bool) error {
 	productImages, err := printfulClient.GetProductImages(product.ID)
 	if err != nil {
@@ -332,27 +333,34 @@ func refreshImages(product printfulmodel.Product, useCache bool) error {
 		return err
 	}
 
-	styleId := -1
-
+	womenUrl := ""
 StyleLoop:
+	// Iterate the styles to find a women picture
 	for _, style := range styles {
 		for _, mockupStyle := range style.MockupStyles {
+			// Filter categories starting with "Women's" but not "Women's Lifestyle"
 			if strings.HasPrefix(mockupStyle.CategoryName, "Women's") && !strings.HasPrefix(mockupStyle.CategoryName, "Women's Lifestyle") && mockupStyle.ViewName == "Front" {
-				styleId = mockupStyle.Id
-				break StyleLoop
+				// Once we found a suitable style, check for pictures
+				for _, productImage := range productImages {
+					// Preferentially look for pictures of white color. If we don't find any, other colors will do
+					if productImage.Color != "White" && womenUrl != "" {
+						continue
+					}
+					for _, image := range productImage.Images {
+						if image.MockupStyleId == mockupStyle.Id {
+							womenUrl = image.ImageUrl
+							break StyleLoop
+						}
+					}
+				}
 			}
 		}
 	}
 
-	if styleId != -1 {
-		for _, productImage := range productImages {
-			for _, image := range productImage.Images {
-				if image.MockupStyleId == styleId {
-					product.ImageWomen = image.ImageUrl
-					database.UpdateProduct(product, database.UpdateProductFields{ImageWomen: true})
-				}
-			}
-		}
+	// Update the product if we found a picture
+	if womenUrl != "" {
+		product.ImageWomen = womenUrl
+		database.UpdateProduct(product, database.UpdateProductFields{ImageWomen: true})
 	}
 
 	return nil

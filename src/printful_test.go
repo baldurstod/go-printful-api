@@ -136,10 +136,12 @@ func TestTemplates(t *testing.T) {
 }
 
 func TestRefreshAllProducts(t *testing.T) {
+	start := time.Now()
 	RefreshAllProducts("USD")
 	for _, lang := range printfulsdk.Languages {
 		RefreshProductTranslations(lang, "USD")
 	}
+	fmt.Println("took", time.Since(start).Minutes(), "min")
 }
 
 func TestRefreshCountries(t *testing.T) {

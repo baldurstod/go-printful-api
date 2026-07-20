@@ -150,18 +150,7 @@ func RefreshAllProducts(currency string, useCache bool) error {
 	}
 
 	for _, product := range products {
-
-		categories, err := printfulClient.GetProductCategories(product.ID)
-		if err != nil {
-			log.Println("error in GetProductCategories:", err)
-
-		} else {
-			for _, category := range categories {
-				product.Categories = append(product.Categories, category.ID)
-			}
-		}
-
-		err = database.InsertProduct(&product)
+		err = database.InsertProduct(product)
 		if err != nil {
 			log.Println("error in RefreshAllProducts:", err)
 		}
@@ -182,6 +171,14 @@ func RefreshAllProducts(currency string, useCache bool) error {
 
 		if err = refreshStyles(product.ID, useCache); err != nil {
 			log.Println("Error while refreshing product styles", product.ID, err)
+		}
+
+		if err = refreshCategories(product, useCache); err != nil {
+			log.Println("Error while refreshing product styles", product.ID, err)
+		}
+
+		if err = refreshImages(product, useCache); err != nil {
+			log.Println("Error while refreshing product images", product.ID, err)
 		}
 	}
 
@@ -321,6 +318,57 @@ func refreshStyles(productID int, useCache bool) error {
 		}
 	}
 
+	return nil
+}
+
+func refreshImages(product printfulmodel.Product, useCache bool) error {
+	productImages, err := printfulClient.GetProductImages(product.ID)
+	if err != nil {
+		return err
+	}
+
+	styles, _, err := database.FindMockupStyles(product.ID)
+	if err != nil {
+		return err
+	}
+
+	styleId := -1
+
+StyleLoop:
+	for _, style := range styles {
+		for _, mockupStyle := range style.MockupStyles {
+			if mockupStyle.CategoryName == "Women's" && mockupStyle.ViewName == "Front" {
+				styleId = mockupStyle.Id
+				break StyleLoop
+			}
+		}
+	}
+
+	if styleId != -1 {
+		for _, productImage := range productImages {
+			for _, image := range productImage.Images {
+				if image.MockupStyleId == styleId {
+					product.ImageWomen = image.ImageUrl
+					database.UpdateProduct(product, database.UpdateProductFields{ImageWomen: true})
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func refreshCategories(product printfulmodel.Product, useCache bool) error {
+	categories, err := printfulClient.GetProductCategories(product.ID)
+	if err != nil {
+		return err
+	} else {
+		product.Categories = make([]int, 0, len(categories))
+		for _, category := range categories {
+			product.Categories = append(product.Categories, category.ID)
+		}
+		database.UpdateProduct(product, database.UpdateProductFields{Categories: true})
+	}
 	return nil
 }
 

@@ -140,6 +140,7 @@ CREATE TABLE products (
 	brand TEXT,
 	model TEXT,
 	image TEXT NOT NULL,
+	image_women TEXT,
 	variant_count INTEGER NOT NULL,
 	catalog_variant_ids INTEGER[] NOT NULL,
 	is_discontinued BOOLEAN NOT NULL,
@@ -149,7 +150,8 @@ CREATE TABLE products (
 	techniques JSONB NOT NULL,
 	placements JSONB NOT NULL,
 	product_options JSONB NOT NULL,
-	last_updated BIGINT NOT NULL
+	date_created TIMESTAMP NOT NULL,
+	date_updated TIMESTAMP NOT NULL
 );
 
 CREATE TABLE product_translations (
